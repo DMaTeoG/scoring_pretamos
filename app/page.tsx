@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { ShieldAlert, Cpu, FileSpreadsheet, FileCheck2, ArrowRight, Building2, Search } from "lucide-react";
 
@@ -9,7 +7,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="text-center space-y-6 max-w-4xl mx-auto pt-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
-          <Cpu className="w-3.5 h-3.5" /> Modelo XGBoost Calibrado + SHAP (AUC: 92.3%)
+          <Cpu className="w-3.5 h-3.5" /> Modelo XGBoost Calibrado + SHAP (AUC Sintético: 92.3%)
         </div>
         
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
