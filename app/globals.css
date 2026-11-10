@@ -4,126 +4,257 @@
 
 @layer base {
   :root {
-    --canvas-bg: #f8fafc;
-    --canvas-text: #0f172a;
-    --card-bg: #ffffff;
-    --card-border: #e2e8f0;
-    --card-hover-border: #94a3b8;
-    --panel-bg: rgba(255, 255, 255, 0.94);
-    --panel-border: #cbd5e1;
-    --inner-bg: #f1f5f9;
-    --inner-border: #e2e8f0;
-    --muted-text: #64748b;
+    --canvas-bg: #f5f5f7;
+    --canvas-text: #1d1d1f;
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-bg-subtle: rgba(255, 255, 255, 0.52);
+    --glass-border: rgba(255, 255, 255, 0.75);
+    --glass-border-subtle: rgba(255, 255, 255, 0.45);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06), 0 2px 8px 0 rgba(0, 0, 0, 0.03);
+    --glass-inner-specular: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+    --muted-text: #6e6e73;
+    --apple-blue: #0071e3;
+    --apple-blue-hover: #0077ed;
   }
 
   .dark {
-    --canvas-bg: #070c18;
-    --canvas-text: #f1f5f9;
-    --card-bg: linear-gradient(180deg, rgba(17, 30, 58, 0.85) 0%, rgba(11, 20, 39, 0.95) 100%);
-    --card-border: rgba(70, 107, 171, 0.22);
-    --card-hover-border: rgba(96, 145, 226, 0.45);
-    --panel-bg: rgba(13, 23, 44, 0.82);
-    --panel-border: rgba(56, 89, 147, 0.28);
-    --inner-bg: #081020;
-    --inner-border: rgba(30, 41, 59, 0.8);
-    --muted-text: #94a3b8;
+    --canvas-bg: #090a0f;
+    --canvas-text: #f5f5f7;
+    --glass-bg: rgba(22, 24, 31, 0.72);
+    --glass-bg-subtle: rgba(26, 30, 40, 0.52);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-border-subtle: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.55), 0 4px 16px 0 rgba(0, 0, 0, 0.35);
+    --glass-inner-specular: inset 0 1px 1px 0 rgba(255, 255, 255, 0.16);
+    --muted-text: #a1a1a6;
+    --apple-blue: #2997ff;
+    --apple-blue-hover: #40a5ff;
   }
 
   body {
     background-color: var(--canvas-bg);
     color: var(--canvas-text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
     min-height: 100vh;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+  }
+
+  /* Apple Ambient Mesh Lighting Substrate */
+  body {
+    background-image: 
+      radial-gradient(at 10% 15%, rgba(0, 113, 227, 0.08) 0px, transparent 55%),
+      radial-gradient(at 90% 10%, rgba(52, 199, 89, 0.06) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(255, 149, 0, 0.05) 0px, transparent 65%),
+      radial-gradient(at 80% 90%, rgba(0, 113, 227, 0.08) 0px, transparent 60%);
+    background-attachment: fixed;
   }
 
   .dark body {
     background-image: 
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(30, 58, 138, 0.22), transparent 70%),
-      radial-gradient(circle at 100% 100%, rgba(15, 23, 42, 0.6), transparent 50%);
-    background-attachment: fixed;
-  }
-
-  body:not(.dark body) {
-    background-image: 
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(219, 234, 254, 0.5), transparent 70%),
-      radial-gradient(circle at 100% 100%, rgba(241, 245, 249, 0.8), transparent 50%);
+      radial-gradient(at 15% 15%, rgba(41, 151, 255, 0.12) 0px, transparent 50%),
+      radial-gradient(at 85% 15%, rgba(48, 209, 88, 0.08) 0px, transparent 50%),
+      radial-gradient(at 50% 60%, rgba(10, 132, 255, 0.07) 0px, transparent 60%),
+      radial-gradient(at 80% 85%, rgba(94, 92, 230, 0.10) 0px, transparent 55%);
     background-attachment: fixed;
   }
 }
 
-/* Clases de Estilo Institucional Bancario (FinTech Corporate Adaptable) */
+/* =========================================================================
+   Apple visionOS & macOS Sonoma Translucent Glass Components
+   ========================================================================= */
+
+/* Primary Frosted Glass Panel */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-inner-specular);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Secondary Frosted Glass Card */
+.glass-card {
+  background: var(--glass-bg-subtle);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border-subtle);
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.04), var(--glass-inner-specular);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow), var(--glass-inner-specular);
+}
+
+/* Apple Translucent Pill Control / Badge */
+.glass-pill {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dark .glass-pill {
+  background: rgba(36, 40, 52, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.3), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Inner Recessed Well / Data Container */
+.glass-well {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+}
+
+.dark .glass-well {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Apple Primary Button */
+.apple-btn-primary {
+  background: linear-gradient(180deg, #0077ed 0%, #0071e3 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 14px 0 rgba(0, 113, 227, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-btn-primary:hover {
+  background: linear-gradient(180deg, #1982f8 0%, #0077ed 100%);
+  box-shadow: 0 6px 20px 0 rgba(0, 113, 227, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.apple-btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Apple Glass Button Secondary */
+.apple-btn-glass {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--canvas-text);
+  border: 1px solid var(--glass-border-subtle);
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04), var(--glass-inner-specular);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .apple-btn-glass {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.apple-btn-glass:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--glass-border);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08), var(--glass-inner-specular);
+  transform: translateY(-1px);
+}
+
+.dark .apple-btn-glass:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.apple-btn-glass:active {
+  transform: scale(0.98);
+}
+
+/* Backward compatibility classes mapped to Apple Glass */
 .bank-panel {
-  background: var(--panel-bg);
-  backdrop-filter: blur(14px);
-  border: 1px solid var(--panel-border);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
-  transition: background-color 0.25s ease, border-color 0.25s ease;
-}
-
-.dark .bank-panel {
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  background: var(--glass-bg);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-inner-specular);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bank-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--card-border);
-  box-shadow: 0 4px 24px -2px rgba(15, 23, 42, 0.06), 0 2px 8px -1px rgba(15, 23, 42, 0.04);
-  transition: all 0.2s ease;
-}
-
-.dark .bank-card {
-  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: var(--glass-bg-subtle);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border-subtle);
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.04), var(--glass-inner-specular);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bank-card:hover {
-  border-color: var(--card-hover-border);
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow), var(--glass-inner-specular);
 }
 
 .bank-inner {
-  background: var(--inner-bg);
-  border: 1px solid var(--inner-border);
-  transition: background-color 0.25s ease, border-color 0.25s ease;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  transition: all 0.25s ease;
+}
+
+.dark .bank-inner {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.4);
 }
 
 /* Tipografía de números tabulares para montos y ratios bancarios */
 .font-tabular {
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 /* Keyframes y Animaciones Fluidas */
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
+@keyframes floatSubtle {
+  0%, 100% {
     transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
   }
 }
 
 @keyframes pulseSubtle {
   0%, 100% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.55;
+    opacity: 0.6;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: floatSubtle 6s ease-in-out infinite;
 }
 
 .animate-pulse-subtle {
-  animation: pulseSubtle 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

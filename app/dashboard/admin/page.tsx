@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { UserCheck, Cpu, KeyRound, Clock, Users, AlertTriangle, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { UserCheck, Cpu, KeyRound, Clock, Users, AlertTriangle, ShieldCheck, CheckCircle2, Sparkles, Server } from "lucide-react";
 import { fetchAPI, formatDateES } from "@/lib/api";
 import { AuditLogEntry, CompanyMembership, ModelVersion, UserProfile } from "@/lib/types";
 import { TableSkeleton } from "@/components/Skeleton";
@@ -222,156 +222,150 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header Panel */}
-      <div className="border-b border-slate-200 dark:border-[#1b2b4b] pb-4 transition-colors">
-        <div className="inline-flex items-center gap-2 text-xs text-purple-700 dark:text-purple-400 font-bold uppercase tracking-wider mb-1">
-          <ShieldCheck className="w-4 h-4" /> Centro de Gobernanza & Auditoría
+      {/* Header Panel con Estilo Apple Frosted Glass */}
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl relative overflow-hidden">
+        {/* Architectural Server Backing */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <img
+            src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1200&auto=format&fit=crop"
+            alt="Infraestructura de Servidores"
+            className="w-full h-full object-cover opacity-10 dark:opacity-10 blur-[1px]"
+          />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2 tracking-tight transition-colors">
-          <UserCheck className="w-7 h-7 text-purple-600 dark:text-purple-400" /> Panel de Administrador del Sistema
-        </h1>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-          Gestión de usuarios corporativos, control de acceso Usuario–NIT, telemetría de modelos XGBoost y trazabilidad de accesos
-        </p>
+
+        {/* macOS Chrome Header */}
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/5 dark:border-white/10">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57] border border-[#e0443e] inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e] border border-[#d89e24] inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#28c840] border border-[#1aab29] inline-block" />
+            <span className="ml-2 text-[11px] font-mono text-[#6e6e73] dark:text-[#a1a1a6]">
+              admin.console://governance-audit
+            </span>
+          </div>
+          <span className="text-[11px] font-semibold text-[#af52de] dark:text-purple-400 px-3 py-1 rounded-full glass-pill">
+            <ShieldCheck className="w-3.5 h-3.5 inline mr-1" />
+            Centro de Gobernanza & Auditoría
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] dark:text-white flex items-center gap-2.5 tracking-tight">
+              <UserCheck className="w-7 h-7 text-[#af52de] dark:text-purple-400" />
+              Panel de Administrador del Sistema
+            </h1>
+            <p className="text-xs text-[#6e6e73] dark:text-[#a1a1a6] mt-1.5 max-w-2xl leading-relaxed">
+              Gestión de usuarios corporativos, control de acceso Usuario–NIT, supervisión de modelos Machine Learning y trazabilidad inmutable en AuditLog.
+            </p>
+          </div>
+        </div>
       </div>
 
       {statusMessage && (
         <div
           role="status"
-          className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs p-3.5 rounded-xl flex items-center gap-2"
+          className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs p-4 rounded-2xl flex items-center gap-2.5 animate-fade-in"
         >
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /> {statusMessage}
+          <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
+          <span>{statusMessage}</span>
         </div>
       )}
 
       {errorMessage && (
         <div
           role="alert"
-          className="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs p-3.5 rounded-xl flex items-center gap-2"
+          className="bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs p-4 rounded-2xl flex items-center gap-2.5 animate-fade-in"
         >
-          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" /> {errorMessage}
+          <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* Sección 1: Versiones del Modelo ML */}
-      <div className="bank-card p-6 rounded-2xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-3">
-          <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Telemetría del Modelo Machine Learning
+      {/* Sección 1: Versiones del Modelo ML en Glass Panel */}
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-black/5 dark:border-white/10">
+          <h3 className="font-bold text-base text-[#1d1d1f] dark:text-white flex items-center gap-2">
+            <Cpu className="w-5 h-5 text-[#0071e3] dark:text-blue-400" /> Telemetría del Modelo Machine Learning
           </h3>
-          <span className="text-[11px] text-blue-700 dark:text-blue-300 font-mono bg-blue-50 dark:bg-[#09152b] border border-blue-200 dark:border-blue-500/30 px-3 py-1 rounded-full">
+          <span className="text-[11px] text-[#0071e3] dark:text-blue-300 font-mono glass-pill px-3 py-1 rounded-full">
             Almacén Seguro: ml/artifacts/ (Dataset Sintético)
           </span>
         </div>
 
         {activeModel && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-            <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
-              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Versión Activa</span>
-              <p className="text-base font-bold text-slate-900 dark:text-white font-mono">{activeModel.version}</p>
-              <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold block">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div className="glass-card p-4 rounded-2xl space-y-1">
+              <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] font-bold uppercase tracking-wider">
+                Versión Activa
+              </span>
+              <p className="text-base font-bold text-[#1d1d1f] dark:text-white font-mono">{activeModel.version}</p>
+              <span className="text-[10px] text-[#34c759] dark:text-emerald-400 font-semibold block">
                 {activeModel.algorithm}
               </span>
             </div>
 
-            <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
-              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">ROC-AUC Test (Partición 2023)</span>
-              <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-tabular">
+            <div className="glass-card p-4 rounded-2xl space-y-1">
+              <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] font-bold uppercase tracking-wider">
+                ROC-AUC Test (Partición 2023)
+              </span>
+              <p className="text-2xl font-black text-[#34c759] dark:text-emerald-400 font-tabular">
                 {((activeModel.metrics.auc_test ?? 0.9231) * 100).toFixed(2)}%
               </p>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+              <span className="text-[10px] text-[#86868b]">
                 Baseline LogReg: {((activeModel.metrics.auc_baseline ?? 0.9091) * 100).toFixed(2)}%
               </span>
             </div>
 
-            <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
-              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Estadístico KS (Separación)</span>
-              <p className="text-xl font-black text-blue-600 dark:text-blue-400 font-tabular">
+            <div className="glass-card p-4 rounded-2xl space-y-1">
+              <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] font-bold uppercase tracking-wider">
+                Estadístico KS (Separación)
+              </span>
+              <p className="text-2xl font-black text-[#0071e3] dark:text-blue-400 font-tabular">
                 {((activeModel.metrics.ks_test ?? 0.7023) * 100).toFixed(2)}%
               </p>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">Poder discriminante</span>
+              <span className="text-[10px] text-[#86868b]">Poder discriminante</span>
             </div>
 
-            <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
-              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Brier Score (Calibración)</span>
-              <p className="text-xl font-black text-amber-600 dark:text-amber-400 font-tabular">
+            <div className="glass-card p-4 rounded-2xl space-y-1">
+              <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] font-bold uppercase tracking-wider">
+                Brier Score (Calibración)
+              </span>
+              <p className="text-2xl font-black text-[#ff9500] dark:text-amber-400 font-tabular">
                 {(activeModel.metrics.brier_test ?? 0.0563).toFixed(4)}
               </p>
-              <span className="text-[10px] text-slate-500 font-mono truncate block">
+              <span className="text-[10px] text-[#86868b] font-mono truncate block">
                 Hash: {activeModel.dataset_hash || "da86d1f8059f0408"}
               </span>
             </div>
           </div>
         )}
 
-        <div className="text-[11px] text-amber-900 dark:text-amber-300/90 bg-amber-50 dark:bg-[#161208] border border-amber-200 dark:border-amber-800/50 p-3 rounded-xl flex items-center gap-2">
+        <div className="text-[11px] text-amber-900 dark:text-amber-200/90 bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-2xl flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <span>
             <strong>Declaración Metodológica (AGENTS.md §7):</strong> Las métricas de validación (AUC, KS, Brier) provienen de la partición temporal de prueba (año 2023) sobre el dataset sintético reproducible y no representan desempeño crediticio comercial real.
           </span>
         </div>
-
-        {models.length > 1 && (
-          <div className="overflow-x-auto pt-2">
-            <table className="w-full text-xs text-left text-slate-700 dark:text-slate-300">
-              <thead className="bg-slate-100 dark:bg-[#081020] text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase text-[10px] tracking-wider">
-                <tr>
-                  <th className="p-3">Versión</th>
-                  <th className="p-3">Algoritmo</th>
-                  <th className="p-3">Estado</th>
-                  <th className="p-3 text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 font-medium">
-                {models.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-blue-950/20">
-                    <td className="p-3 font-mono font-bold text-slate-900 dark:text-white">{m.version}</td>
-                    <td className="p-3">{m.algorithm}</td>
-                    <td className="p-3">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          m.is_active
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/50"
-                            : "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800"
-                        }`}
-                      >
-                        {m.is_active ? "ACTIVO" : "INACTIVO"}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right">
-                      {!m.is_active && (
-                        <button
-                          type="button"
-                          onClick={() => handleActivateModel(m.id)}
-                          className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1 rounded-lg text-[11px] transition-all"
-                        >
-                          Activar Versión
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
 
       {/* Sección 2: Aprobación de Vínculos Usuario–Empresa */}
-      <div className="bank-panel p-6 rounded-2xl space-y-4">
-        <div className="border-b border-slate-200 dark:border-slate-800/80 pb-3">
-          <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-            <KeyRound className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Aprobación de Vínculos Usuario – NIT
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-4">
+        <div className="pb-4 border-b border-black/5 dark:border-white/10">
+          <h3 className="font-bold text-base text-[#1d1d1f] dark:text-white flex items-center gap-2">
+            <KeyRound className="w-5 h-5 text-[#34c759] dark:text-emerald-400" /> Aprobación de Vínculos Usuario – NIT
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Verificación de credenciales para empresas solicitantes de acceso al portal</p>
+          <p className="text-xs text-[#6e6e73] dark:text-[#a1a1a6]">
+            Verificación de credenciales para empresas solicitantes de acceso al portal
+          </p>
         </div>
 
         {loading ? (
           <TableSkeleton rows={2} cols={6} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left text-slate-700 dark:text-slate-300">
-              <thead className="bg-slate-100 dark:bg-[#081020] text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase text-[10px] tracking-wider">
+            <table className="w-full text-xs text-left text-[#1d1d1f] dark:text-[#f5f5f7]">
+              <thead className="glass-well text-[#6e6e73] dark:text-[#a1a1a6] uppercase text-[10px] tracking-wider font-semibold rounded-xl">
                 <tr>
                   <th className="p-3">ID</th>
                   <th className="p-3">Usuario Empresa</th>
@@ -381,21 +375,21 @@ export default function AdminDashboard() {
                   <th className="p-3 text-right">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 font-medium">
+              <tbody className="divide-y divide-black/5 dark:divide-white/5 font-medium">
                 {memberships.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-blue-950/20">
-                    <td className="p-3 font-semibold text-slate-500 dark:text-slate-400">#{item.id}</td>
-                    <td className="p-3 text-slate-900 dark:text-white">{item.user_email}</td>
-                    <td className="p-3 font-mono text-blue-700 dark:text-blue-300">{item.company_detail.nit}</td>
+                  <tr key={item.id} className="hover:bg-white/40 dark:hover:bg-white/5 transition-colors">
+                    <td className="p-3 font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">#{item.id}</td>
+                    <td className="p-3 text-[#1d1d1f] dark:text-white">{item.user_email}</td>
+                    <td className="p-3 font-mono text-[#0071e3] dark:text-blue-400">{item.company_detail.nit}</td>
                     <td className="p-3">{item.company_detail.legal_name}</td>
                     <td className="p-3">
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                           item.status === "APPROVED"
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/50"
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
                             : item.status === "REJECTED"
-                            ? "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/50"
-                            : "bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/50"
+                            ? "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30"
+                            : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
                         }`}
                       >
                         {item.status === "APPROVED"
@@ -410,7 +404,7 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => handleApproveMembership(item.id, "APPROVED")}
-                          className="bg-emerald-700 hover:bg-emerald-600 text-white font-semibold px-3 py-1 rounded-lg text-[11px] transition-all"
+                          className="apple-btn-primary px-3 py-1 rounded-xl text-[11px] font-semibold"
                         >
                           Aprobar
                         </button>
@@ -419,7 +413,7 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => handleApproveMembership(item.id, "REJECTED")}
-                          className="bg-rose-700 hover:bg-rose-600 text-white font-semibold px-3 py-1 rounded-lg text-[11px] transition-all"
+                          className="apple-btn-glass px-3 py-1 rounded-xl text-[11px] font-semibold text-rose-600 dark:text-rose-400"
                         >
                           Rechazar
                         </button>
@@ -434,20 +428,22 @@ export default function AdminDashboard() {
       </div>
 
       {/* Sección 3: Gestión de Usuarios */}
-      <div className="bank-panel p-6 rounded-2xl space-y-4">
-        <div className="border-b border-slate-200 dark:border-slate-800/80 pb-3">
-          <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Registro de Usuarios del Sistema
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-4">
+        <div className="pb-4 border-b border-black/5 dark:border-white/10">
+          <h3 className="font-bold text-base text-[#1d1d1f] dark:text-white flex items-center gap-2">
+            <Users className="w-5 h-5 text-[#0071e3] dark:text-blue-400" /> Registro de Usuarios del Sistema
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Cuentas autorizadas con roles ANALYST, COMPANY o ADMIN</p>
+          <p className="text-xs text-[#6e6e73] dark:text-[#a1a1a6]">
+            Cuentas autorizadas con roles ANALYST, COMPANY o ADMIN
+          </p>
         </div>
 
         {loading ? (
           <TableSkeleton rows={3} cols={5} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left text-slate-700 dark:text-slate-300">
-              <thead className="bg-slate-100 dark:bg-[#081020] text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase text-[10px] tracking-wider">
+            <table className="w-full text-xs text-left text-[#1d1d1f] dark:text-[#f5f5f7]">
+              <thead className="glass-well text-[#6e6e73] dark:text-[#a1a1a6] uppercase text-[10px] tracking-wider font-semibold rounded-xl">
                 <tr>
                   <th className="p-3">ID</th>
                   <th className="p-3">Correo Electrónico</th>
@@ -456,18 +452,18 @@ export default function AdminDashboard() {
                   <th className="p-3 text-right">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 font-medium">
+              <tbody className="divide-y divide-black/5 dark:divide-white/5 font-medium">
                 {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-blue-950/20">
-                    <td className="p-3 font-semibold text-slate-500 dark:text-slate-400">#{u.id}</td>
-                    <td className="p-3 text-slate-900 dark:text-white">{u.email}</td>
-                    <td className="p-3 font-semibold text-blue-700 dark:text-blue-300">{u.role_display || u.role}</td>
+                  <tr key={u.id} className="hover:bg-white/40 dark:hover:bg-white/5 transition-colors">
+                    <td className="p-3 font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">#{u.id}</td>
+                    <td className="p-3 text-[#1d1d1f] dark:text-white">{u.email}</td>
+                    <td className="p-3 font-semibold text-[#0071e3] dark:text-blue-400">{u.role_display || u.role}</td>
                     <td className="p-3">
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                           u.is_active
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/50"
-                            : "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/50"
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                            : "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30"
                         }`}
                       >
                         {u.is_active ? "ACTIVO" : "INACTIVO"}
@@ -477,7 +473,7 @@ export default function AdminDashboard() {
                       <button
                         type="button"
                         onClick={() => handleToggleUserActive(u)}
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 dark:bg-[#0a1936] dark:hover:bg-blue-900/40 dark:text-slate-200 px-3 py-1 rounded-lg text-[11px] border dark:border-blue-500/30 transition-all"
+                        className="apple-btn-glass px-3 py-1 rounded-xl text-[11px] font-semibold"
                       >
                         {u.is_active ? "Desactivar" : "Activar"}
                       </button>
@@ -491,20 +487,22 @@ export default function AdminDashboard() {
       </div>
 
       {/* Sección 4: Visor de Registros de Auditoría */}
-      <div className="bank-panel p-6 rounded-2xl space-y-4">
-        <div className="border-b border-slate-200 dark:border-slate-800/80 pb-3">
-          <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-            <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" /> Registro Trazable de Auditoría (AuditLog)
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-4">
+        <div className="pb-4 border-b border-black/5 dark:border-white/10">
+          <h3 className="font-bold text-base text-[#1d1d1f] dark:text-white flex items-center gap-2">
+            <Clock className="w-5 h-5 text-[#ff9500] dark:text-amber-400" /> Registro Trazable de Auditoría (AuditLog)
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Historial inmutable de operaciones, consultas de NIT y descargas de PDF</p>
+          <p className="text-xs text-[#6e6e73] dark:text-[#a1a1a6]">
+            Historial inmutable de operaciones, consultas de NIT y descargas de PDF
+          </p>
         </div>
 
         {loading ? (
           <TableSkeleton rows={2} cols={6} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left text-slate-700 dark:text-slate-300">
-              <thead className="bg-slate-100 dark:bg-[#081020] text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase text-[10px] tracking-wider">
+            <table className="w-full text-xs text-left text-[#1d1d1f] dark:text-[#f5f5f7]">
+              <thead className="glass-well text-[#6e6e73] dark:text-[#a1a1a6] uppercase text-[10px] tracking-wider font-semibold rounded-xl">
                 <tr>
                   <th className="p-3">ID Audit</th>
                   <th className="p-3">Usuario</th>
@@ -514,23 +512,23 @@ export default function AdminDashboard() {
                   <th className="p-3">Fecha</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 font-medium">
+              <tbody className="divide-y divide-black/5 dark:divide-white/5 font-medium">
                 {auditLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-blue-950/20">
-                    <td className="p-3 font-semibold text-slate-500 dark:text-slate-400">#{log.id}</td>
-                    <td className="p-3 text-slate-900 dark:text-white">{log.user_email}</td>
+                  <tr key={log.id} className="hover:bg-white/40 dark:hover:bg-white/5 transition-colors">
+                    <td className="p-3 font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">#{log.id}</td>
+                    <td className="p-3 text-[#1d1d1f] dark:text-white">{log.user_email}</td>
                     <td className="p-3">
-                      <span className="bg-blue-50 dark:bg-[#0c1c3a] text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 px-2 py-0.5 rounded font-mono text-[10px]">
+                      <span className="glass-pill px-2.5 py-0.5 rounded-full font-mono text-[10px] text-[#0071e3] dark:text-blue-300 font-semibold">
                         {log.action_display || log.action}
                       </span>
                     </td>
-                    <td className="p-3 font-mono text-slate-800 dark:text-slate-300">
+                    <td className="p-3 font-mono text-[#1d1d1f] dark:text-white">
                       {log.metadata?.nit
                         ? `NIT: ${log.metadata.nit}`
                         : `${log.entity} #${log.entity_id}`}
                     </td>
-                    <td className="p-3 text-slate-500 dark:text-slate-400 font-mono">{log.ip_address || "127.0.0.1"}</td>
-                    <td className="p-3 text-slate-500 dark:text-slate-400">{formatDateES(log.created_at)}</td>
+                    <td className="p-3 text-[#6e6e73] dark:text-[#a1a1a6] font-mono">{log.ip_address || "127.0.0.1"}</td>
+                    <td className="p-3 text-[#6e6e73] dark:text-[#a1a1a6]">{formatDateES(log.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -42,7 +42,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#0f1d38] border border-slate-300 dark:border-slate-700/80 hover:border-slate-400 dark:hover:border-slate-600 shadow-sm transition-all active:scale-[0.95]"
+      className="p-2 rounded-2xl glass-pill text-[#6e6e73] dark:text-[#a1a1a6] hover:text-[#1d1d1f] dark:hover:text-white transition-all active:scale-[0.95]"
       title={theme === "dark" ? "Cambiar a Modo Blanco (Claro)" : "Cambiar a Modo Negro (Oscuro)"}
       aria-label={theme === "dark" ? "Cambiar a Modo Blanco (Claro)" : "Cambiar a Modo Negro (Oscuro)"}
     >

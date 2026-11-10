@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, AlertTriangle, KeyRound } from "lucide-react";
+import { Lock, Mail, AlertTriangle, KeyRound, ShieldCheck, ArrowRight } from "lucide-react";
 import { z } from "zod";
 import { fetchAPI } from "@/lib/api";
 import { LoginResponse, UserRole } from "@/lib/types";
@@ -42,7 +42,6 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      // Server sets httpOnly + SameSite cookies automatically (AGENTS.md §6: never store JWT in localStorage)
       const data = await fetchAPI<LoginResponse>("/auth/login/", {
         method: "POST",
         body: JSON.stringify(parsed.data),
@@ -91,66 +90,82 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto py-8 sm:py-12 animate-fade-in">
-      <div className="bank-card p-6 sm:p-8 rounded-2xl space-y-6 shadow-xl">
-        <div className="text-center space-y-3">
-          <div className="flex justify-center">
+    <div className="max-w-md mx-auto py-6 sm:py-10 animate-fade-in relative">
+      {/* Background Ambience & Frosted Glass Card */}
+      <div className="relative rounded-3xl overflow-hidden glass-panel p-6 sm:p-8 space-y-6">
+        {/* Subtle Architectural Backing */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <img
+            src="https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?q=80&w=1000&auto=format&fit=crop"
+            alt="Arquitectura Financiera"
+            className="w-full h-full object-cover opacity-10 dark:opacity-15 blur-[2px]"
+          />
+        </div>
+
+        {/* macOS Window Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-black/5 dark:border-white/10">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57] border border-[#e0443e] inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e] border border-[#d89e24] inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#28c840] border border-[#1aab29] inline-block" />
+          </div>
+          <span className="text-[10px] font-mono text-[#6e6e73] dark:text-[#a1a1a6] flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3 text-[#34c759]" />
+            TLS 1.3 &bull; httpOnly Session
+          </span>
+        </div>
+
+        {/* Logo and Header */}
+        <div className="text-center space-y-2">
+          <div className="flex justify-center pb-1">
             <Logo size="lg" />
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Acceso a Terminal Corporativa</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Autenticación segura con JWT en cookies <code className="text-blue-700 dark:text-blue-300 font-medium">httpOnly</code>
-            </p>
-          </div>
+          <h2 className="text-xl font-bold text-[#1d1d1f] dark:text-white">
+            Autenticación de Acceso
+          </h2>
+          <p className="text-xs text-[#6e6e73] dark:text-[#a1a1a6]">
+            Ingresa con tus credenciales bancarias para operar en la plataforma.
+          </p>
         </div>
 
         {error && (
-          <div
-            role="alert"
-            className="bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-800/60 dark:text-rose-300 text-xs p-3.5 rounded-xl flex items-center gap-2"
-          >
-            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+          <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5 animate-fade-in">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4" noValidate>
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label htmlFor="login-email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Correo Institucional
+            <label className="block text-xs font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] mb-1.5">
+              Correo Corporativo
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+              <Mail className="w-4 h-4 text-[#6e6e73] dark:text-[#a1a1a6] absolute left-3.5 top-3" />
               <input
-                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="analista.demo@banco.com"
                 required
-                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-all shadow-sm"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs glass-well text-[#1d1d1f] dark:text-white placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3] transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label
-              htmlFor="login-password"
-              className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
-            >
-              Contraseña de Acceso
+            <label className="block text-xs font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] mb-1.5">
+              Contraseña
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+              <Lock className="w-4 h-4 text-[#6e6e73] dark:text-[#a1a1a6] absolute left-3.5 top-3" />
               <input
-                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-all shadow-sm"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs glass-well text-[#1d1d1f] dark:text-white placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3] transition-all"
               />
             </div>
           </div>
@@ -158,36 +173,47 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all border border-blue-400/30 shadow-md shadow-blue-900/15 dark:shadow-blue-950/60 active:scale-[0.98] disabled:opacity-50"
+            className="w-full apple-btn-primary py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 shadow-md disabled:opacity-60"
           >
-            {loading ? "Verificando credenciales..." : "Ingresar al Sistema"}
+            {loading ? (
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <span>Iniciar Sesión Segura</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </>
+            )}
           </button>
         </form>
 
-        <div className="pt-4 border-t border-slate-200 dark:border-slate-800/80">
-          <div className="flex items-center gap-1.5 justify-center mb-3 text-slate-500 dark:text-slate-400 text-xs">
-            <KeyRound className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Accesos Rápidos Demo (Semilla del Sistema):</span>
+        {/* Demo Fast Login Buttons */}
+        <div className="pt-4 border-t border-black/5 dark:border-white/10 space-y-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">
+            <KeyRound className="w-3.5 h-3.5 text-[#ff9500]" />
+            <span>Accesos Demo Rápidos (Ambiente Académico)</span>
           </div>
+
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => handleQuickLogin("analista.demo@banco.com", "ANALYST")}
-              className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 dark:bg-[#0b1730] dark:hover:bg-blue-900/30 dark:border-blue-500/30 dark:text-blue-300 text-[11px] font-semibold py-2 px-2 rounded-xl transition-all active:scale-[0.98]"
+              className="apple-btn-glass py-2 px-2 rounded-xl text-[11px] font-semibold text-[#0071e3] dark:text-blue-300 text-center"
             >
               Analista
             </button>
+
             <button
               type="button"
-              onClick={() => handleQuickLogin("empresa.demo@empresa.com", "COMPANY")}
-              className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 dark:bg-[#0a1e1b] dark:hover:bg-emerald-900/30 dark:border-emerald-500/30 dark:text-emerald-300 text-[11px] font-semibold py-2 px-2 rounded-xl transition-all active:scale-[0.98]"
+              onClick={() => handleQuickLogin("empresa.demo@cliente.com", "COMPANY")}
+              className="apple-btn-glass py-2 px-2 rounded-xl text-[11px] font-semibold text-[#34c759] dark:text-emerald-300 text-center"
             >
               Empresa
             </button>
+
             <button
               type="button"
               onClick={() => handleQuickLogin("admin.demo@banco.com", "ADMIN")}
-              className="bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 dark:bg-[#1b102b] dark:hover:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300 text-[11px] font-semibold py-2 px-2 rounded-xl transition-all active:scale-[0.98]"
+              className="apple-btn-glass py-2 px-2 rounded-xl text-[11px] font-semibold text-[#af52de] dark:text-purple-300 text-center"
             >
               Admin
             </button>

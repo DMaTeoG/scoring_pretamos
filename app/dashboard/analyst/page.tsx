@@ -13,6 +13,10 @@ import {
   Filter,
   ShieldCheck,
   RefreshCw,
+  Landmark,
+  MapPin,
+  Briefcase,
+  Layers,
 } from "lucide-react";
 import { z } from "zod";
 import { fetchAPI, downloadReportPDF, formatCOP, formatDateES } from "@/lib/api";
@@ -184,7 +188,6 @@ export default function AnalystDashboard() {
         method: "POST",
         body: JSON.stringify({ nit }),
       });
-      // Brief pause to allow analyst to see full pipeline completion
       await new Promise((resolve) => setTimeout(resolve, 800));
       setEvaluation(res);
       setHistory((prev) => [res, ...prev.filter((item) => item.id !== res.id)]);
@@ -271,13 +274,13 @@ export default function AnalystDashboard() {
   const getRiskBadgeColor = (risk: string) => {
     switch (risk) {
       case "BAJO":
-        return "bg-emerald-50 dark:bg-emerald-950/70 border-emerald-300 dark:border-emerald-500/50 text-emerald-800 dark:text-emerald-300 ring-1 ring-emerald-500/20";
+        return "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300";
       case "MEDIO":
-        return "bg-amber-50 dark:bg-amber-950/70 border-amber-300 dark:border-amber-500/50 text-amber-800 dark:text-amber-300 ring-1 ring-amber-500/20";
+        return "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300";
       case "ALTO":
-        return "bg-rose-50 dark:bg-rose-950/70 border-rose-300 dark:border-rose-500/50 text-rose-800 dark:text-rose-300 ring-1 ring-rose-500/20";
+        return "bg-rose-500/15 border-rose-500/40 text-rose-700 dark:text-rose-300";
       default:
-        return "bg-red-50 dark:bg-red-950 border-red-300 dark:border-red-700 text-red-800 dark:text-red-200";
+        return "bg-red-500/15 border-red-500/40 text-red-700 dark:text-red-300";
     }
   };
 
@@ -285,29 +288,52 @@ export default function AnalystDashboard() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header Panel */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#1b2b4b] pb-4 transition-colors">
-        <div>
-          <div className="inline-flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider mb-1">
-            <ShieldCheck className="w-4 h-4" /> Terminal de Riesgo Crediticio
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2 tracking-tight transition-colors">
-            <BarChart3 className="w-7 h-7 text-blue-600 dark:text-blue-400" /> Evaluación de Solvencia Empresarial
-          </h1>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-            Consulta de NIT, análisis de ratios contables, estimación con XGBoost calibrado y generación de informe PDF
-          </p>
+      {/* Apple Window Header Panel */}
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl relative overflow-hidden">
+        {/* Subtle Architectural Backing */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <img
+            src="https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?q=80&w=1200&auto=format&fit=crop"
+            alt="Terminal Bancario"
+            className="w-full h-full object-cover opacity-10 dark:opacity-10 blur-[1px]"
+          />
         </div>
-      </div>
 
-      {/* Lookup Form */}
-      <div className="bank-panel p-6 rounded-2xl">
-        <form onSubmit={handleLookup} className="flex flex-col sm:flex-row gap-3" noValidate>
+        {/* macOS Chrome Header */}
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/5 dark:border-white/10">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57] border border-[#e0443e] inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e] border border-[#d89e24] inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#28c840] border border-[#1aab29] inline-block" />
+            <span className="ml-2 text-[11px] font-mono text-[#6e6e73] dark:text-[#a1a1a6]">
+              terminal.analyst://scoring-evaluation
+            </span>
+          </div>
+          <span className="text-[11px] font-semibold text-[#0071e3] dark:text-blue-400 px-3 py-1 rounded-full glass-pill">
+            <ShieldCheck className="w-3.5 h-3.5 inline mr-1 text-[#34c759]" />
+            Terminal de Riesgo Oficial
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] dark:text-white flex items-center gap-2.5 tracking-tight">
+              <BarChart3 className="w-7 h-7 text-[#0071e3] dark:text-blue-400" />
+              Evaluación de Solvencia Empresarial
+            </h1>
+            <p className="text-xs text-[#6e6e73] dark:text-[#a1a1a6] mt-1.5 max-w-2xl leading-relaxed">
+              Consulta de personas jurídicas mediante NIT, ingesta automatizada de datos abiertos SODA (RUES), computación de ratios financieros y dictamen probabilístico con explicabilidad SHAP.
+            </p>
+          </div>
+        </div>
+
+        {/* Search Bar Estilo Apple Glass */}
+        <form onSubmit={handleLookup} className="flex flex-col sm:flex-row gap-3 mt-6" noValidate>
           <div className="relative flex-1">
             <label htmlFor="nit-input" className="sr-only">
               NIT de la empresa a consultar
             </label>
-            <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-[#86868b]" />
             <input
               id="nit-input"
               type="text"
@@ -315,21 +341,23 @@ export default function AnalystDashboard() {
               onChange={(e) => setNit(e.target.value)}
               placeholder="Ingresa el NIT con dígito de verificación (ej: 800197268-4)"
               required
-              className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-all font-mono shadow-sm"
+              className="w-full glass-well rounded-2xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#1d1d1f] dark:text-white placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3] font-mono transition-all"
             />
           </div>
           <button
             type="submit"
             disabled={lookupLoading}
-            className="bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white text-xs font-semibold px-6 py-2.5 rounded-xl border border-blue-400/30 shadow-md shadow-blue-900/15 dark:shadow-blue-950/60 transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
+            className="apple-btn-primary font-semibold text-xs px-6 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
           >
             {lookupLoading ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin text-amber-300" /> Consultando Fuentes...
+                <RefreshCw className="w-4 h-4 animate-spin text-amber-300" />
+                <span>Consultando Fuentes...</span>
               </>
             ) : (
               <>
-                <Search className="w-4 h-4 text-amber-300" /> Consultar Empresa por NIT
+                <Search className="w-4 h-4 text-amber-300" />
+                <span>Consultar Empresa por NIT</span>
               </>
             )}
           </button>
@@ -339,112 +367,169 @@ export default function AnalystDashboard() {
       {error && (
         <div
           role="alert"
-          className="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs p-4 rounded-xl flex items-center gap-2"
+          className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5 animate-fade-in"
         >
-          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" /> {error}
+          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+          <span>{error}</span>
         </div>
       )}
 
       {/* SKELETON: Mientras busca la empresa */}
       {lookupLoading && <CompanySkeleton />}
 
-      {/* Company Details Card */}
+      {/* Company Details Glass Card con Fotografía de Sede Corporativa */}
       {!lookupLoading && company && (
-        <div className="bank-card p-6 rounded-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-[#122240] border border-blue-200 dark:border-blue-400/30 flex items-center justify-center text-blue-700 dark:text-blue-300 shrink-0 shadow-sm">
-                <Building2 className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg text-slate-900 dark:text-white leading-tight">{company.legal_name}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                  NIT: <span className="text-blue-700 dark:text-blue-300 font-semibold">{company.nit}</span> | CIIU: {company.ciiu || "N/A"}
-                </p>
-              </div>
-            </div>
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-6 relative overflow-hidden">
+          {/* Header con Imagen Real de Sede */}
+          <div className="relative rounded-2xl overflow-hidden p-6 sm:p-8 text-white">
+            <img
+              src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200&auto=format&fit=crop"
+              alt="Sede Corporativa"
+              className="absolute inset-0 w-full h-full object-cover object-center filter brightness-50"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-950/90 via-slate-900/80 to-transparent" />
 
-            <button
-              type="button"
-              onClick={handleEvaluate}
-              disabled={evaluationLoading}
-              className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs px-5 py-2.5 rounded-xl border border-amber-300/40 shadow-lg shadow-amber-950/20 transition-all flex items-center gap-2 active:scale-[0.98] disabled:opacity-50"
-            >
-              {evaluationLoading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-slate-950" /> Computando Modelo ML...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 text-slate-950" /> Ejecutar Evaluación Crediticia
-                </>
-              )}
-            </button>
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl backdrop-blur-xl bg-white/20 border border-white/30 flex items-center justify-center text-white shrink-0 shadow-lg">
+                  <Building2 className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider mb-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
+                    Registro Mercantil Verificado &bull; Cámara de Comercio
+                  </div>
+                  <h3 className="font-extrabold text-xl sm:text-2xl text-white leading-tight">
+                    {company.legal_name}
+                  </h3>
+                  <p className="text-xs text-blue-200/90 font-mono mt-1">
+                    NIT: <span className="text-white font-bold">{company.nit}</span> | CIIU: {company.ciiu || "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleEvaluate}
+                disabled={evaluationLoading}
+                className="apple-btn-primary font-bold text-xs px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl shrink-0 disabled:opacity-50"
+              >
+                {evaluationLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Computando Modelo ML...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    <span>Ejecutar Evaluación Crediticia</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-            <div className="bg-slate-50 dark:bg-[#091224] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
-              <span className="text-slate-500 dark:text-slate-400 block mb-1">Jurisdicción / Ciudad</span>
-              <span className="font-semibold text-slate-800 dark:text-slate-200">{company.city || "Bogotá, D.C."}</span>
+          {/* Atributos Clave de la Empresa en Glass Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="glass-card p-3.5 rounded-2xl">
+              <div className="flex items-center gap-1.5 text-[#6e6e73] dark:text-[#a1a1a6] mb-1">
+                <MapPin className="w-3.5 h-3.5 text-[#0071e3]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Jurisdicción / Ciudad</span>
+              </div>
+              <span className="font-semibold text-[#1d1d1f] dark:text-[#f5f5f7]">
+                {company.city || "Bogotá, D.C."}
+              </span>
             </div>
-            <div className="bg-slate-50 dark:bg-[#091224] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
-              <span className="text-slate-500 dark:text-slate-400 block mb-1">Clasificación de Tamaño</span>
-              <span className="font-semibold text-slate-800 dark:text-slate-200">{company.size || "MEDIANA"}</span>
+
+            <div className="glass-card p-3.5 rounded-2xl">
+              <div className="flex items-center gap-1.5 text-[#6e6e73] dark:text-[#a1a1a6] mb-1">
+                <Briefcase className="w-3.5 h-3.5 text-[#ff9500]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Tamaño de Empresa</span>
+              </div>
+              <span className="font-semibold text-[#1d1d1f] dark:text-[#f5f5f7]">
+                {company.size || "MEDIANA"}
+              </span>
             </div>
-            <div className="bg-slate-50 dark:bg-[#091224] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
-              <span className="text-slate-500 dark:text-slate-400 block mb-1">Estado Matrícula Mercantil</span>
-              <span className="font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+
+            <div className="glass-card p-3.5 rounded-2xl">
+              <div className="flex items-center gap-1.5 text-[#6e6e73] dark:text-[#a1a1a6] mb-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#34c759]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Estado Matrícula</span>
+              </div>
+              <span className="font-semibold text-[#34c759] dark:text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
                 {company.status || "ACTIVA"}
               </span>
             </div>
-            <div className="bg-slate-50 dark:bg-[#091224] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
-              <span className="text-slate-500 dark:text-slate-400 block mb-1">Fuente Oficial Conectada</span>
-              <span className="font-semibold text-blue-700 dark:text-blue-400">datos.gov.co (SODA)</span>
+
+            <div className="glass-card p-3.5 rounded-2xl">
+              <div className="flex items-center gap-1.5 text-[#6e6e73] dark:text-[#a1a1a6] mb-1">
+                <Landmark className="w-3.5 h-3.5 text-[#af52de]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Fuente Oficial</span>
+              </div>
+              <span className="font-semibold text-[#0071e3] dark:text-blue-400">
+                datos.gov.co (SODA)
+              </span>
             </div>
           </div>
 
+          {/* Ratios Financieros en Apple Glass Panel */}
           {latestStatement && (
-            <div className="border-t border-slate-200 dark:border-slate-800/80 pt-4 space-y-3">
+            <div className="pt-2 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <h4 className="text-xs font-bold text-[#1d1d1f] dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#0071e3]" />
                   Último Estado Financiero Registrado (Año Fiscal {latestStatement.fiscal_year})
                 </h4>
-                <span className="text-[11px] text-emerald-800 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded">
-                  Confianza de Datos: {latestStatement.ratios.confidence_level}
+                <span className="text-[10px] text-emerald-800 dark:text-emerald-300 font-semibold px-2.5 py-0.5 rounded-full glass-pill">
+                  Confianza: {latestStatement.ratios.confidence_level}
                 </span>
               </div>
+
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-                <div className="bg-slate-50 dark:bg-[#081020] p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                  <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Ingresos Operacionales</span>
-                  <span className="font-semibold text-slate-900 dark:text-white font-tabular">
+                <div className="glass-card p-3 rounded-2xl">
+                  <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] font-medium uppercase tracking-wider mb-1">
+                    Ingresos Operacionales
+                  </span>
+                  <span className="font-semibold text-[#1d1d1f] dark:text-white font-tabular">
                     {formatCOP(latestStatement.revenue)}
                   </span>
                 </div>
-                <div className="bg-slate-50 dark:bg-[#081020] p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                  <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Activos Totales</span>
-                  <span className="font-semibold text-slate-900 dark:text-white font-tabular">
+
+                <div className="glass-card p-3 rounded-2xl">
+                  <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] font-medium uppercase tracking-wider mb-1">
+                    Activos Totales
+                  </span>
+                  <span className="font-semibold text-[#1d1d1f] dark:text-white font-tabular">
                     {formatCOP(latestStatement.total_assets)}
                   </span>
                 </div>
-                <div className="bg-slate-50 dark:bg-[#081020] p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                  <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Razón Corriente</span>
-                  <span className="font-semibold text-blue-700 dark:text-blue-300 font-tabular">
+
+                <div className="glass-card p-3 rounded-2xl">
+                  <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] font-medium uppercase tracking-wider mb-1">
+                    Razón Corriente
+                  </span>
+                  <span className="font-semibold text-[#0071e3] dark:text-blue-400 font-tabular">
                     {latestStatement.ratios.current_ratio !== null ? `${latestStatement.ratios.current_ratio}x` : "N/A"}
                   </span>
                 </div>
-                <div className="bg-slate-50 dark:bg-[#081020] p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                  <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Nivel Endeudamiento</span>
-                  <span className="font-semibold text-amber-700 dark:text-amber-300 font-tabular">
+
+                <div className="glass-card p-3 rounded-2xl">
+                  <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] font-medium uppercase tracking-wider mb-1">
+                    Nivel Endeudamiento
+                  </span>
+                  <span className="font-semibold text-[#ff9500] dark:text-amber-400 font-tabular">
                     {latestStatement.ratios.debt_ratio !== null
                       ? `${(latestStatement.ratios.debt_ratio * 100).toFixed(1)}%`
                       : "N/A"}
                   </span>
                 </div>
-                <div className="bg-slate-50 dark:bg-[#081020] p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                  <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Margen Neto</span>
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-300 font-tabular">
+
+                <div className="glass-card p-3 rounded-2xl">
+                  <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] font-medium uppercase tracking-wider mb-1">
+                    Margen Neto
+                  </span>
+                  <span className="font-semibold text-[#34c759] dark:text-emerald-400 font-tabular">
                     {latestStatement.ratios.net_margin !== null
                       ? `${(latestStatement.ratios.net_margin * 100).toFixed(1)}%`
                       : "N/A"}
@@ -456,56 +541,55 @@ export default function AnalystDashboard() {
         </div>
       )}
 
-      {/* SKELETON O PROCESO WEBSOCKET EN TIEMPO REAL */}
+      {/* SKELETON O PROCESO WEBSOCKET EN TIEMPO REAL CON ESTILO FROSTED GLASS */}
       {evaluationLoading && wsProgress && (
-        <div className="bank-card p-6 rounded-2xl border-2 border-blue-500/40 bg-gradient-to-br from-blue-50/50 via-white to-blue-50/30 dark:from-[#0a1628] dark:via-[#091224] dark:to-[#081020] space-y-5 shadow-xl animate-in fade-in duration-300">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-5 animate-fade-in border-2 border-[#0071e3]/40">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-black/5 dark:border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <div className="w-10 h-10 rounded-2xl glass-pill flex items-center justify-center text-[#0071e3] dark:text-blue-400">
                 <RefreshCw className="w-5 h-5 animate-spin" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                    Canal WebSocket Activo (Tiempo Real)
+                  <h4 className="font-bold text-sm text-[#1d1d1f] dark:text-white">
+                    Canal WebSocket en Vivo (Tiempo Real)
                   </h4>
-                  <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/50 px-2 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                    ws://scoring
+                  <span className="flex items-center gap-1.5 text-[10px] font-semibold text-[#34c759] dark:text-emerald-300 px-2.5 py-0.5 rounded-full glass-pill">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#34c759] animate-ping" />
+                    ws://scoring.channel
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-[#6e6e73] dark:text-[#a1a1a6] mt-0.5">
                   Transmisión continua de fases de scoring para NIT{" "}
-                  <span className="font-mono font-semibold text-blue-600 dark:text-blue-300">{nit}</span>
+                  <span className="font-mono font-semibold text-[#0071e3] dark:text-blue-400">{nit}</span>
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-xs font-mono font-bold text-blue-700 dark:text-blue-300">
+              <span className="text-sm font-mono font-bold text-[#0071e3] dark:text-blue-400">
                 {wsProgress.progress}%
               </span>
             </div>
           </div>
 
-          {/* Barra de progreso animada */}
-          <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+          {/* Barra de progreso de cristal estilo Apple */}
+          <div className="w-full glass-well rounded-full h-2.5 overflow-hidden p-0.5">
             <div
-              className="bg-gradient-to-r from-blue-600 via-indigo-500 to-amber-500 h-2 rounded-full transition-all duration-300 ease-out"
+              className="bg-gradient-to-r from-[#0071e3] via-[#5e5ce6] to-[#34c759] h-full rounded-full transition-all duration-300 ease-out shadow-sm"
               style={{ width: `${wsProgress.progress}%` }}
             />
           </div>
 
-          {/* Estado actual transmitido por el WebSocket */}
-          <div className="bg-white/80 dark:bg-[#070e1c] p-4 rounded-xl border border-blue-200/60 dark:border-blue-900/40 flex items-center justify-between">
+          <div className="glass-card p-4 rounded-2xl flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0071e3] dark:text-blue-400">
                 Fase {wsProgress.step} de 6 — {wsProgress.title}
               </span>
-              <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+              <p className="text-xs text-[#1d1d1f] dark:text-white font-medium">
                 {wsProgress.detail}
               </p>
             </div>
-            <span className="text-xs font-mono px-2 py-1 bg-blue-100 dark:bg-blue-950/80 border border-blue-300 dark:border-blue-800/60 text-blue-800 dark:text-blue-300 rounded font-semibold">
+            <span className="text-xs font-mono px-3 py-1 rounded-xl glass-pill font-semibold text-[#0071e3] dark:text-blue-300">
               {wsProgress.status}
             </span>
           </div>
@@ -515,39 +599,40 @@ export default function AnalystDashboard() {
       {/* SKELETON: Mientras computa la evaluación ML si no hay ws */}
       {evaluationLoading && !wsProgress && <EvaluationSkeleton />}
 
-      {/* Evaluation Results Card */}
+      {/* Evaluation Results Glass Card */}
       {!evaluationLoading && evaluation && (
-        <div className="bank-card p-6 sm:p-8 rounded-2xl space-y-6 shadow-xl relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-4 relative">
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-6 relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-black/5 dark:border-white/10">
             <div>
-              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest block mb-1">
-                Resultado Oficial de Evaluación
+              <span className="text-[10px] font-bold text-[#ff9500] dark:text-amber-400 uppercase tracking-widest block mb-1">
+                Resultado Oficial de Evaluación Cuantitativa
               </span>
-              <h3 className="font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Dictamen Cuantitativo de Riesgo
+              <h3 className="font-bold text-xl text-[#1d1d1f] dark:text-white flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-[#34c759]" /> Dictamen de Solvencia
               </h3>
             </div>
             <button
               type="button"
               onClick={() => handleDownloadPDF(evaluation.id, evaluation.company.nit)}
-              className="bg-blue-50 dark:bg-[#0b1730] hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-xs font-semibold px-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-500/40 shadow-sm transition-all flex items-center gap-2 active:scale-[0.98]"
+              className="apple-btn-glass text-xs font-semibold px-5 py-2.5 rounded-2xl flex items-center gap-2"
             >
-              <Download className="w-4 h-4 text-amber-600 dark:text-amber-400" /> Descargar Dictamen Técnico (PDF)
+              <Download className="w-4 h-4 text-[#0071e3] dark:text-blue-400" />
+              <span>Descargar Dictamen Técnico (PDF)</span>
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
-            {/* Medidor de Score Institucional */}
-            <div className="md:col-span-1 text-center p-6 bg-slate-50 dark:bg-[#081020] rounded-2xl border border-blue-200 dark:border-blue-500/30 space-y-2 shadow-inner">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider block">
+            {/* Medidor de Score Apple Vision */}
+            <div className="md:col-span-1 text-center p-6 glass-card rounded-3xl space-y-2 border border-[#0071e3]/30">
+              <span className="text-[10px] text-[#6e6e73] dark:text-[#a1a1a6] uppercase font-bold tracking-wider block">
                 Score Crediticio
               </span>
-              <div className="text-5xl font-black text-amber-600 dark:text-amber-400 tracking-tight font-tabular">
+              <div className="text-5xl font-black text-[#ff9500] dark:text-amber-400 tracking-tight font-tabular">
                 {evaluation.score}{" "}
-                <span className="text-xs font-normal text-slate-400 dark:text-slate-500">/ 1000</span>
+                <span className="text-xs font-normal text-[#86868b]">/ 1000</span>
               </div>
               <div
-                className={`inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide ${getRiskBadgeColor(
+                className={`inline-block px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide border ${getRiskBadgeColor(
                   evaluation.risk_level
                 )}`}
               >
@@ -555,54 +640,62 @@ export default function AnalystDashboard() {
               </div>
             </div>
 
-            <div className="md:col-span-3 grid grid-cols-3 gap-4 text-center">
-              <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
-                <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">
+            <div className="md:col-span-3 grid grid-cols-3 gap-3 text-center">
+              <div className="glass-card p-4 rounded-2xl space-y-1">
+                <span className="text-xs text-[#6e6e73] dark:text-[#a1a1a6] block font-medium">
                   Probabilidad Incumplimiento (PD)
                 </span>
-                <span className="text-2xl font-black text-slate-900 dark:text-white font-tabular">
+                <span className="text-2xl font-black text-[#1d1d1f] dark:text-white font-tabular">
                   {(evaluation.pd * 100).toFixed(2)}%
                 </span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Calibración Sigmoide</span>
+                <span className="text-[10px] text-[#86868b] block">Calibración Sigmoide</span>
               </div>
 
-              <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
-                <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">Confianza de Datos</span>
-                <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{evaluation.confidence}</span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Completitud Auditada</span>
+              <div className="glass-card p-4 rounded-2xl space-y-1">
+                <span className="text-xs text-[#6e6e73] dark:text-[#a1a1a6] block font-medium">
+                  Confianza de Datos
+                </span>
+                <span className="text-2xl font-black text-[#34c759] dark:text-emerald-400">
+                  {evaluation.confidence}
+                </span>
+                <span className="text-[10px] text-[#86868b] block">Completitud Auditada</span>
               </div>
 
-              <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
-                <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">Versión del Modelo</span>
-                <span className="text-base font-bold text-blue-700 dark:text-blue-300 block font-mono mt-1">
+              <div className="glass-card p-4 rounded-2xl space-y-1">
+                <span className="text-xs text-[#6e6e73] dark:text-[#a1a1a6] block font-medium">
+                  Versión del Modelo
+                </span>
+                <span className="text-base font-bold text-[#0071e3] dark:text-blue-400 block font-mono mt-1">
                   {evaluation.model_version_name || "xgb-2026.1"}
                 </span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Inferencia joblib</span>
+                <span className="text-[10px] text-[#86868b] block">Inferencia joblib</span>
               </div>
             </div>
           </div>
 
-          {/* SHAP Factors Breakdown */}
+          {/* Factores Determinantes SHAP con Barras de Impacto Traslúcidas */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-amber-600 dark:text-amber-400" /> Factores Determinantes SHAP (Top 5 en Español)
+              <h4 className="text-xs font-bold text-[#1d1d1f] dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-[#ff9500]" /> Factores Determinantes SHAP (Top 5 en Español)
               </h4>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">Impacto local sobre la puntuación base</span>
+              <span className="text-[10px] text-[#6e6e73] dark:text-[#a1a1a6]">
+                Impacto cuantitativo sobre la probabilidad base
+              </span>
             </div>
 
             <div className="space-y-2">
               {evaluation.factors.map((factor, idx) => (
                 <div
                   key={`${factor.feature}-${idx}`}
-                  className="bg-slate-50 dark:bg-[#081020] p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                  className="glass-card p-3.5 rounded-2xl flex items-center justify-between text-xs hover:border-[#0071e3]/40 transition-colors"
                 >
-                  <span className="text-slate-700 dark:text-slate-300 font-medium">{factor.text}</span>
+                  <span className="text-[#1d1d1f] dark:text-[#f5f5f7] font-medium">{factor.text}</span>
                   <span
-                    className={`font-mono font-bold px-2.5 py-1 rounded text-xs shrink-0 ml-4 ${
+                    className={`font-mono font-bold px-3 py-1 rounded-xl text-xs shrink-0 ml-4 border ${
                       factor.impact >= 0
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800/50"
-                        : "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800/50"
+                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                        : "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30"
                     }`}
                   >
                     {factor.impact >= 0 ? `+${factor.impact}` : factor.impact} pts
@@ -612,7 +705,7 @@ export default function AnalystDashboard() {
             </div>
           </div>
 
-          <div className="text-[11px] text-amber-900 dark:text-amber-300/90 bg-amber-50 dark:bg-[#161208] border border-amber-200 dark:border-amber-800/50 p-3.5 rounded-xl flex items-center gap-2">
+          <div className="text-[11px] text-amber-900 dark:text-amber-200/90 bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex items-center gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>
               <strong>Aviso Metodológico (AGENTS.md §8):</strong> El score es una estimación de riesgo con fines académicos; no garantiza el pago o incumplimiento y no sustituye el criterio del analista.
@@ -621,14 +714,16 @@ export default function AnalystDashboard() {
         </div>
       )}
 
-      {/* History Table with Filters (T5.3) */}
-      <div className="bank-panel p-6 rounded-2xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-3">
+      {/* History Table con Filtros y Vidrio Esmerilado */}
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-black/5 dark:border-white/10">
           <div>
-            <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-              <Filter className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Registro Histórico de Evaluaciones
+            <h3 className="font-bold text-base text-[#1d1d1f] dark:text-white flex items-center gap-2">
+              <Filter className="w-4 h-4 text-[#0071e3] dark:text-blue-400" /> Registro Histórico de Evaluaciones
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Consultas previas archivadas en la base de datos corporativa</p>
+            <p className="text-xs text-[#6e6e73] dark:text-[#a1a1a6]">
+              Consultas previas archivadas en la base de datos corporativa
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -638,13 +733,13 @@ export default function AnalystDashboard() {
               value={filterNit}
               onChange={(e) => setFilterNit(e.target.value)}
               placeholder="Filtrar por NIT..."
-              className="bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-lg px-3 py-1.5 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono shadow-sm"
+              className="glass-well rounded-xl px-3 py-1.5 text-[#1d1d1f] dark:text-white placeholder-[#86868b] font-mono focus:outline-none focus:ring-1 focus:ring-[#0071e3]"
             />
             <select
               aria-label="Filtrar por nivel de riesgo"
               value={filterRisk}
               onChange={(e) => setFilterRisk(e.target.value)}
-              className="bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-lg px-3 py-1.5 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 shadow-sm"
+              className="glass-well rounded-xl px-3 py-1.5 text-[#1d1d1f] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#0071e3]"
             >
               <option value="">Todos los niveles</option>
               <option value="BAJO">Bajo Riesgo</option>
@@ -655,7 +750,7 @@ export default function AnalystDashboard() {
             <button
               type="button"
               onClick={() => loadHistory(filterNit, filterRisk)}
-              className="bg-blue-50 dark:bg-[#122344] hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-800 dark:text-blue-300 font-semibold px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-500/40 transition-colors"
+              className="apple-btn-glass px-4 py-1.5 rounded-xl text-xs font-semibold text-[#0071e3] dark:text-blue-400"
             >
               Filtrar
             </button>
@@ -665,13 +760,13 @@ export default function AnalystDashboard() {
         {historyLoading ? (
           <TableSkeleton rows={4} cols={8} />
         ) : history.length === 0 ? (
-          <p className="text-xs text-slate-500 py-8 text-center border border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl">
+          <p className="text-xs text-[#86868b] py-8 text-center border border-dashed border-black/10 dark:border-white/10 rounded-2xl">
             No se encontraron evaluaciones registradas para los filtros seleccionados.
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left text-slate-700 dark:text-slate-300">
-              <thead className="bg-slate-100 dark:bg-[#081020] text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase text-[10px] tracking-wider font-semibold">
+            <table className="w-full text-xs text-left text-[#1d1d1f] dark:text-[#f5f5f7]">
+              <thead className="glass-well text-[#6e6e73] dark:text-[#a1a1a6] uppercase text-[10px] tracking-wider font-semibold rounded-xl">
                 <tr>
                   <th className="p-3">ID</th>
                   <th className="p-3">NIT</th>
@@ -683,16 +778,16 @@ export default function AnalystDashboard() {
                   <th className="p-3 text-right">Informe</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 font-medium">
+              <tbody className="divide-y divide-black/5 dark:divide-white/5 font-medium">
                 {history.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-blue-950/20 transition-colors">
-                    <td className="p-3 font-semibold text-slate-500 dark:text-slate-400">#{item.id}</td>
-                    <td className="p-3 font-mono text-blue-700 dark:text-blue-300">{item.company.nit}</td>
-                    <td className="p-3 text-slate-900 dark:text-white">{item.company.legal_name}</td>
-                    <td className="p-3 font-bold text-amber-600 dark:text-amber-400 font-tabular">{item.score}</td>
+                  <tr key={item.id} className="hover:bg-white/40 dark:hover:bg-white/5 transition-colors">
+                    <td className="p-3 font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">#{item.id}</td>
+                    <td className="p-3 font-mono text-[#0071e3] dark:text-blue-400">{item.company.nit}</td>
+                    <td className="p-3 text-[#1d1d1f] dark:text-white font-medium">{item.company.legal_name}</td>
+                    <td className="p-3 font-bold text-[#ff9500] dark:text-amber-400 font-tabular">{item.score}</td>
                     <td className="p-3">
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getRiskBadgeColor(
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getRiskBadgeColor(
                           item.risk_level
                         )}`}
                       >
@@ -700,12 +795,12 @@ export default function AnalystDashboard() {
                       </span>
                     </td>
                     <td className="p-3 font-tabular">{(item.pd * 100).toFixed(2)}%</td>
-                    <td className="p-3 text-slate-500 dark:text-slate-400">{formatDateES(item.created_at)}</td>
+                    <td className="p-3 text-[#6e6e73] dark:text-[#a1a1a6]">{formatDateES(item.created_at)}</td>
                     <td className="p-3 text-right">
                       <button
                         type="button"
                         onClick={() => handleDownloadPDF(item.id, item.company.nit)}
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold inline-flex items-center gap-1 hover:underline"
+                        className="text-[#0071e3] dark:text-blue-400 hover:text-blue-600 font-semibold inline-flex items-center gap-1 hover:underline"
                       >
                         <Download className="w-3.5 h-3.5" /> PDF
                       </button>
