@@ -557,6 +557,15 @@ export default function CompanyDashboard() {
                 className="sr-only"
               />
             </label>
+
+            <a
+              href="/plantilla_estados_financieros.csv"
+              download="plantilla_estados_financieros.csv"
+              className="apple-btn-glass w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 text-[#0071e3] dark:text-blue-400"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Descargar Plantilla CSV de Ejemplo</span>
+            </a>
           </div>
 
           <div className="glass-panel p-6 rounded-3xl space-y-3">
