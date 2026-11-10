@@ -146,8 +146,14 @@ export default function AnalystDashboard() {
 
     let ws: WebSocket | null = null;
     try {
-      const wsHost = typeof window !== "undefined" ? window.location.hostname : "localhost";
-      ws = new WebSocket(`ws://${wsHost}:8000/ws/scoring/`);
+      const isProduction =
+        typeof window !== "undefined" &&
+        window.location.hostname !== "localhost" &&
+        window.location.hostname !== "127.0.0.1";
+      const wsProtocol = isProduction ? "wss:" : "ws:";
+      const defaultWsHost = isProduction ? "prestamo-bancos-bac.onrender.com" : `${window.location.hostname}:8000`;
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || `${wsProtocol}//${defaultWsHost}/ws/scoring/`;
+      ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         ws?.send(JSON.stringify({ action: "evaluate", nit }));
