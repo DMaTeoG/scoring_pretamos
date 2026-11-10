@@ -1,16 +1,28 @@
 import { CSVImportResponse } from "./types";
 
-const getApiBaseUrl = (): string => {
-  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
-    return process.env.NEXT_PUBLIC_API_BASE_URL;
+export const getApiBaseUrl = (): string => {
+  const envUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, "");
   }
-  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-    return "https://prestamo-bancos-bac.onrender.com/api/v1";
+
+  if (typeof window !== "undefined") {
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.endsWith(".local");
+
+    if (!isLocalhost) {
+      return "https://prestamo-bancos-bac.onrender.com/api/v1";
+    }
   }
+
   return "http://localhost:8000/api/v1";
 };
-
-const API_BASE_URL = getApiBaseUrl();
 
 interface APIErrorPayload {
   code?: string;
@@ -19,12 +31,15 @@ interface APIErrorPayload {
 }
 
 export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const baseUrl = getApiBaseUrl();
+  const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(`${baseUrl}${normalizedEndpoint}`, {
     ...options,
     headers,
     // Always include httpOnly cookies (AGENTS.md §6: never store JWT in localStorage)
@@ -36,7 +51,8 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
     const errorMessage =
       errorData.message || errorData.detail || "Error en la comunicación con el servidor.";
     console.error("[Scoring API Error]", {
-      endpoint,
+      endpoint: normalizedEndpoint,
+      baseUrl,
       method: options.method || "GET",
       status: response.status,
       code: errorData.code || "HTTP_ERROR",
@@ -52,11 +68,12 @@ export async function uploadCSVFile(
   companyId: number,
   file: File
 ): Promise<CSVImportResponse> {
+  const baseUrl = getApiBaseUrl();
   const formData = new FormData();
   formData.append("file", file);
 
   const response = await fetch(
-    `${API_BASE_URL}/companies/${companyId}/financial-statements/import-csv/`,
+    `${baseUrl}/companies/${companyId}/financial-statements/import-csv/`,
     {
       method: "POST",
       body: formData,
@@ -81,7 +98,8 @@ export async function uploadCSVFile(
 }
 
 export async function downloadReportPDF(evaluationId: number): Promise<Blob> {
-  const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}/report.pdf`, {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/evaluations/${evaluationId}/report.pdf`, {
     method: "GET",
     credentials: "include",
   });
