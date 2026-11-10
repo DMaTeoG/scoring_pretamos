@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ShieldCheck, FileText, UserCheck, LogOut, BarChart3 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { FileText, UserCheck, LogOut, BarChart3, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { fetchAPI } from "@/lib/api";
 import { UserProfile } from "@/lib/types";
+import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<{ email: string; role: string; role_display: string } | null>(
     null
   );
@@ -52,7 +55,7 @@ export default function Navbar() {
     try {
       await fetchAPI<{ message: string }>("/auth/logout/", { method: "POST" });
     } catch {
-      // Proceed with client session cleanup even if backend is offline
+      // Clean up local session even if backend offline
     }
     sessionStorage.removeItem("user_email");
     sessionStorage.removeItem("user_role");
@@ -61,67 +64,78 @@ export default function Navbar() {
     router.push("/login");
   };
 
+  const isActive = (path: string) => pathname === path;
+
   return (
-    <header className="w-full border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50">
-      {/* Banner Legal Obligatorio (AGENTS.md §8) */}
-      <div className="bg-amber-950/80 border-b border-amber-800/50 px-4 py-1.5 text-center text-xs text-amber-200">
-        ⚠️ <strong>Aviso Legal Académico:</strong> El score es una estimación de riesgo con fines
-        académicos; no garantiza el pago o incumplimiento y no sustituye el criterio del analista.
+    <header className="w-full border-b border-slate-200 dark:border-[#1b2b4b] bg-white/95 dark:bg-[#091122]/95 backdrop-blur-md sticky top-0 z-50 transition-colors">
+      {/* Banner Legal Obligatorio (AGENTS.md §8) adaptable a modo claro y oscuro */}
+      <div className="bg-amber-50 dark:bg-[#18150a] border-b border-amber-200 dark:border-amber-900/40 px-4 py-1.5 text-center text-xs text-amber-900 dark:text-amber-300/90 flex items-center justify-center gap-2 transition-colors">
+        <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+        <span>
+          <strong>Aviso Legal Institucional (Fines Académicos):</strong> El score es una estimación de riesgo cuantitativo; no garantiza el pago o incumplimiento y no sustituye el criterio técnico del analista.
+        </span>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-            <ShieldCheck className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <span className="font-bold text-lg text-slate-100 tracking-tight">
-              ScoreEmpresarial
-            </span>
-            <span className="text-xs block text-blue-400 font-medium">
-              Plataforma Inteligente de Riesgo
-            </span>
-          </div>
+        <Link href="/" className="group flex items-center transition-transform active:scale-[0.98]">
+          <Logo size="md" />
         </Link>
 
-        <nav className="flex items-center gap-6" aria-label="Navegación principal">
+        <nav className="flex items-center gap-1 sm:gap-2" aria-label="Navegación principal">
           <Link
             href="/dashboard/analyst"
-            className="text-sm text-slate-300 hover:text-white flex items-center gap-2 transition-colors"
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
+              isActive("/dashboard/analyst")
+                ? "bg-blue-50 text-blue-800 border border-blue-200 shadow-sm dark:bg-[#182848] dark:text-blue-200 dark:border-blue-400/30"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-white/5"
+            }`}
           >
-            <BarChart3 className="w-4 h-4 text-blue-400" />
-            Analista
+            <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span className="hidden md:inline">Módulo</span> Analista
           </Link>
 
           <Link
             href="/dashboard/company"
-            className="text-sm text-slate-300 hover:text-white flex items-center gap-2 transition-colors"
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
+              isActive("/dashboard/company")
+                ? "bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-sm dark:bg-[#142e2b] dark:text-emerald-200 dark:border-emerald-400/30"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-white/5"
+            }`}
           >
-            <FileText className="w-4 h-4 text-emerald-400" />
-            Portal Empresa
+            <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="hidden md:inline">Portal</span> Empresa
           </Link>
 
           <Link
             href="/dashboard/admin"
-            className="text-sm text-slate-300 hover:text-white flex items-center gap-2 transition-colors"
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
+              isActive("/dashboard/admin")
+                ? "bg-purple-50 text-purple-800 border border-purple-200 shadow-sm dark:bg-[#281b36] dark:text-purple-200 dark:border-purple-400/30"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-white/5"
+            }`}
           >
-            <UserCheck className="w-4 h-4 text-purple-400" />
-            Administrador
+            <UserCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <span className="hidden md:inline">Panel</span> Admin
           </Link>
 
+          {/* Theme Toggle (Modo Blanco / Modo Negro) */}
+          <div className="ml-1 sm:ml-2">
+            <ThemeToggle />
+          </div>
+
           {user ? (
-            <div className="flex items-center gap-4 border-l border-slate-800 pl-4">
-              <div className="text-right">
-                <p className="text-xs text-slate-200 font-medium">{user.email}</p>
-                <span className="text-[10px] text-blue-400 uppercase font-semibold">
+            <div className="flex items-center gap-3 border-l border-slate-200 dark:border-slate-800/80 pl-3 ml-1 sm:ml-2">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs text-slate-800 dark:text-slate-200 font-semibold leading-tight">{user.email}</p>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider">
                   {user.role_display}
                 </span>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                title="Cerrar Sesión"
-                aria-label="Cerrar Sesión"
+                className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 rounded-lg transition-colors border border-transparent hover:border-rose-200 dark:hover:border-rose-500/20"
+                title="Cerrar Sesión Segura"
+                aria-label="Cerrar Sesión Segura"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -129,9 +143,9 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-md shadow-blue-600/20 transition-all"
+              className="ml-2 bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg border border-blue-400/30 shadow-md shadow-blue-900/10 dark:shadow-blue-900/30 transition-all active:scale-[0.98]"
             >
-              Iniciar Sesión
+              Ingreso Seguro
             </Link>
           )}
         </nav>

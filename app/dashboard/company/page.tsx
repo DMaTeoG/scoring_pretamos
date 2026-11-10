@@ -9,10 +9,14 @@ import {
   AlertCircle,
   Download,
   TrendingUp,
+  RefreshCw,
+  ShieldCheck,
+  FileText,
 } from "lucide-react";
 import { z } from "zod";
 import { fetchAPI, uploadCSVFile, downloadReportPDF, formatCOP, formatDateES } from "@/lib/api";
 import { CompanyProfile, Evaluation, FinancialStatement } from "@/lib/types";
+import { Skeleton } from "@/components/Skeleton";
 
 const financialStatementSchema = z.object({
   fiscal_year: z
@@ -32,6 +36,7 @@ const financialStatementSchema = z.object({
 export default function CompanyDashboard() {
   const [company, setCompany] = useState<CompanyProfile | null>(null);
   const [latestEvaluation, setLatestEvaluation] = useState<Evaluation | null>(null);
+  const [contextLoading, setContextLoading] = useState(true);
   const [fiscalYear, setFiscalYear] = useState(2023);
   const [revenue, setRevenue] = useState("1200000000");
   const [expenses, setExpenses] = useState("850000000");
@@ -47,32 +52,41 @@ export default function CompanyDashboard() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    let active = true;
     async function loadCompanyContext() {
+      setContextLoading(true);
       try {
         const myComp = await fetchAPI<CompanyProfile>("/companies/my-company/");
-        setCompany(myComp);
+        if (active) setCompany(myComp);
       } catch {
-        setCompany({
-          id: 1,
-          nit: "800197268-4",
-          legal_name: "EMPRESA VINCULADA DEMO S.A.S.",
-          ciiu: "6412",
-          city: "Bogotá, D.C.",
-          size: "MEDIANA",
-          status: "ACTIVA",
-        });
+        if (active) {
+          setCompany({
+            id: 1,
+            nit: "800197268-4",
+            legal_name: "EMPRESA VINCULADA DEMO S.A.S.",
+            ciiu: "6412",
+            city: "Bogotá, D.C.",
+            size: "MEDIANA",
+            status: "ACTIVA",
+          });
+        }
       }
 
       try {
         const evals = await fetchAPI<Evaluation[]>("/evaluations/");
-        if (Array.isArray(evals) && evals.length > 0) {
+        if (active && Array.isArray(evals) && evals.length > 0) {
           setLatestEvaluation(evals[0]);
         }
       } catch {
         // Keep null if no evaluations yet
+      } finally {
+        if (active) setContextLoading(false);
       }
     }
     loadCompanyContext();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,14 +134,14 @@ export default function CompanyDashboard() {
         }
       );
       setSuccessMsg(
-        `¡Estado financiero ${created.fiscal_year} guardado! Confianza de completitud: ${created.ratios.confidence_level}.`
+        `¡Estado financiero del año ${created.fiscal_year} radicado exitosamente! Confianza de completitud: ${created.ratios.confidence_level}.`
       );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("propio NIT") || msg.includes("permiso")) {
         setErrorMsg(msg);
       } else {
-        setSuccessMsg("¡Estado financiero registrado exitosamente!");
+        setSuccessMsg("¡Estado financiero registrado en el sistema exitosamente!");
       }
     } finally {
       setLoading(false);
@@ -142,7 +156,7 @@ export default function CompanyDashboard() {
     setErrorMsg("");
 
     if (!file.name.toLowerCase().endsWith(".csv")) {
-      setErrorMsg("El archivo debe tener extensión .csv.");
+      setErrorMsg("El archivo debe tener extensión .csv obligatoriamente.");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -183,38 +197,42 @@ export default function CompanyDashboard() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+    <div className="space-y-8 animate-fade-in">
+      {/* Header Panel */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#1b2b4b] pb-4 transition-colors">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-emerald-400" /> Portal de Empresa
+          <div className="inline-flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider mb-1">
+            <Building2 className="w-4 h-4" /> Portal de Autogestión Corporativa
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2 tracking-tight transition-colors">
+            Gestión Financiera de Persona Jurídica
           </h1>
-          <p className="text-xs text-slate-400">
-            Carga de estados financieros (formulario y CSV) y consulta en solo lectura de la
-            evaluación de tu NIT
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            Carga y radicación de balances contables, importación de lotes CSV y consulta del dictamen crediticio de tu NIT
           </p>
         </div>
 
         {company && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl text-xs">
-            <span className="text-slate-400 block">NIT Autorizado:</span>
-            <span className="font-bold text-emerald-400">
-              {company.nit} — {company.legal_name}
+          <div className="bg-emerald-50 dark:bg-[#0a1e1b] border border-emerald-200 dark:border-emerald-500/30 px-4 py-2.5 rounded-xl text-xs shadow-sm transition-colors">
+            <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+              NIT de Empresa Autorizado
+            </span>
+            <span className="font-bold text-emerald-800 dark:text-emerald-300 font-mono">
+              {company.nit} &bull; {company.legal_name}
             </span>
           </div>
         )}
       </div>
 
-      {/* Última Evaluación del NIT de la Empresa (Modo Lectura — T5.4) */}
-      <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+      {/* Dictamen Reciente de la Empresa */}
+      <div className="bank-card p-6 rounded-2xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-3">
           <div>
-            <h2 className="font-bold text-base text-slate-100 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-400" /> Última Evaluación Crediticia de tu
-              NIT (Solo Lectura)
+            <h2 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Dictamen Cuantitativo Vigente (Solo Lectura)
             </h2>
-            <p className="text-xs text-slate-400">
-              Visualización del resultado más reciente emitido por un Analista para tu empresa
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Evaluación más reciente generada por el analista financiero para tu empresa
             </p>
           </div>
           {latestEvaluation && (
@@ -223,85 +241,96 @@ export default function CompanyDashboard() {
               onClick={() =>
                 handleDownloadOwnPDF(latestEvaluation.id, latestEvaluation.company.nit)
               }
-              className="bg-slate-800 hover:bg-slate-700 text-blue-300 text-xs font-semibold px-4 py-2 rounded-xl border border-slate-700 transition-all inline-flex items-center gap-2"
+              className="bg-blue-50 dark:bg-[#0a1a36] hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-xs font-semibold px-4 py-2 rounded-xl border border-blue-200 dark:border-blue-500/40 transition-all inline-flex items-center gap-2 active:scale-[0.98]"
             >
-              <Download className="w-4 h-4" /> Descargar PDF
+              <Download className="w-4 h-4 text-amber-600 dark:text-amber-400" /> Descargar Dictamen PDF
             </button>
           )}
         </div>
 
-        {latestEvaluation ? (
+        {contextLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-pulse">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-6 w-28" />
+              </div>
+            ))}
+          </div>
+        ) : latestEvaluation ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-              <div className="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
-                <span className="text-slate-400 block mb-1">Score Obtenido</span>
-                <span className="text-2xl font-black text-blue-400">
-                  {latestEvaluation.score} / 1000
+              <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Score Asignado</span>
+                <span className="text-3xl font-black text-amber-600 dark:text-amber-400 font-tabular">
+                  {latestEvaluation.score} <span className="text-xs text-slate-400 dark:text-slate-500 font-normal">/ 1000</span>
                 </span>
               </div>
-              <div className="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
-                <span className="text-slate-400 block mb-1">Nivel de Riesgo</span>
-                <span className="text-lg font-bold text-emerald-400">
+              <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Nivel de Riesgo</span>
+                <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">
                   {latestEvaluation.risk_level}
                 </span>
               </div>
-              <div className="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
-                <span className="text-slate-400 block mb-1">Confianza de Datos</span>
-                <span className="text-lg font-bold text-slate-200">
+              <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Confianza de Datos</span>
+                <span className="text-lg font-bold text-slate-800 dark:text-slate-200">
                   {latestEvaluation.confidence}
                 </span>
               </div>
-              <div className="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
-                <span className="text-slate-400 block mb-1">Fecha Evaluación</span>
-                <span className="text-sm font-semibold text-slate-300">
+              <div className="bg-slate-50 dark:bg-[#081020] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Fecha de Emisión</span>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                   {formatDateES(latestEvaluation.created_at)}
                 </span>
               </div>
             </div>
 
-            <p className="text-[11px] text-amber-300/80 bg-amber-950/40 border border-amber-900/40 p-3 rounded-xl">
-              El score es una estimación de riesgo con fines académicos; no garantiza el pago o
-              incumplimiento y no sustituye el criterio del analista.
-            </p>
+            <div className="text-[11px] text-amber-900 dark:text-amber-300/90 bg-amber-50 dark:bg-[#161208] border border-amber-200 dark:border-amber-800/50 p-3 rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>
+                <strong>Aviso Legal Académico (AGENTS.md §8):</strong> El score es una estimación de riesgo con fines académicos; no garantiza el pago o incumplimiento y no sustituye el criterio del analista.
+              </span>
+            </div>
           </div>
         ) : (
-          <p className="text-xs text-slate-400 py-4">
-            Aún no hay evaluaciones registradas para tu NIT. Carga tus estados financieros para que
-            un analista pueda evaluar tu empresa.
-          </p>
+          <div className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center border border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl space-y-1">
+            <p className="font-semibold text-slate-700 dark:text-slate-300">Aún no se registran evaluaciones formales para tu NIT.</p>
+            <p className="text-slate-500">Radica tus estados financieros para que un analista bancario pueda generar tu informe.</p>
+          </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Formulario de Carga Web con Validación Zod */}
-        <div className="lg:col-span-2 glass-card p-6 rounded-2xl border border-slate-800 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div className="flex items-center gap-3">
-              <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
-              <h3 className="font-bold text-base text-slate-100">
-                Captura de Estado Financiero (COP)
+        <div className="lg:col-span-2 bank-card p-6 rounded-2xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-3">
+            <div className="flex items-center gap-2.5">
+              <FileSpreadsheet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                Radicación de Estados Financieros (COP)
               </h3>
             </div>
-            <span className="text-[11px] text-slate-400">
-              Vista previa Ingresos: {formatCOP(revenue)}
+            <span className="text-[11px] text-slate-600 dark:text-slate-400 font-mono bg-slate-100 dark:bg-[#081020] px-2.5 py-1 rounded border border-slate-200 dark:border-slate-800">
+              Vista previa Ingresos: <strong className="text-slate-800 dark:text-slate-200">{formatCOP(revenue)}</strong>
             </span>
           </div>
 
           {successMsg && (
             <div
               role="status"
-              className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs p-3 rounded-xl flex items-center gap-2"
+              className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs p-3.5 rounded-xl flex items-center gap-2"
             >
-              <CheckCircle2 className="w-4 h-4 shrink-0" /> {successMsg}
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" /> {successMsg}
             </div>
           )}
 
           {errorMsg && (
             <div
               role="alert"
-              className="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs p-3 rounded-xl flex items-center gap-2"
+              className="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs p-3.5 rounded-xl flex items-center gap-2"
             >
-              <AlertCircle className="w-4 h-4 shrink-0" /> {errorMsg}
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" /> {errorMsg}
             </div>
           )}
 
@@ -311,8 +340,8 @@ export default function CompanyDashboard() {
             noValidate
           >
             <div>
-              <label htmlFor="fiscal-year" className="block text-slate-400 font-semibold mb-1">
-                Año Fiscal
+              <label htmlFor="fiscal-year" className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
+                Año Fiscal Contable
               </label>
               <input
                 id="fiscal-year"
@@ -320,12 +349,12 @@ export default function CompanyDashboard() {
                 value={fiscalYear}
                 onChange={(e) => setFiscalYear(Number(e.target.value))}
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500 shadow-sm"
               />
             </div>
 
             <div>
-              <label htmlFor="revenue" className="block text-slate-400 font-semibold mb-1">
+              <label htmlFor="revenue" className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                 Ingresos Operacionales (COP)
               </label>
               <input
@@ -334,12 +363,12 @@ export default function CompanyDashboard() {
                 value={revenue}
                 onChange={(e) => setRevenue(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500 shadow-sm"
               />
             </div>
 
             <div>
-              <label htmlFor="expenses" className="block text-slate-400 font-semibold mb-1">
+              <label htmlFor="expenses" className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                 Gastos Operacionales (COP)
               </label>
               <input
@@ -348,12 +377,12 @@ export default function CompanyDashboard() {
                 value={expenses}
                 onChange={(e) => setExpenses(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500 shadow-sm"
               />
             </div>
 
             <div>
-              <label htmlFor="net-income" className="block text-slate-400 font-semibold mb-1">
+              <label htmlFor="net-income" className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                 Utilidad Neta (COP)
               </label>
               <input
@@ -362,12 +391,12 @@ export default function CompanyDashboard() {
                 value={netIncome}
                 onChange={(e) => setNetIncome(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500 shadow-sm"
               />
             </div>
 
             <div>
-              <label htmlFor="total-assets" className="block text-slate-400 font-semibold mb-1">
+              <label htmlFor="total-assets" className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                 Activos Totales (COP)
               </label>
               <input
@@ -376,12 +405,12 @@ export default function CompanyDashboard() {
                 value={totalAssets}
                 onChange={(e) => setTotalAssets(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500 shadow-sm"
               />
             </div>
 
             <div>
-              <label htmlFor="current-assets" className="block text-slate-400 font-semibold mb-1">
+              <label htmlFor="current-assets" className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                 Activos Corrientes (COP)
               </label>
               <input
@@ -390,14 +419,14 @@ export default function CompanyDashboard() {
                 value={currentAssets}
                 onChange={(e) => setCurrentAssets(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500 shadow-sm"
               />
             </div>
 
             <div>
               <label
                 htmlFor="total-liabilities"
-                className="block text-slate-400 font-semibold mb-1"
+                className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5"
               >
                 Pasivos Totales (COP)
               </label>
@@ -407,14 +436,14 @@ export default function CompanyDashboard() {
                 value={totalLiabilities}
                 onChange={(e) => setTotalLiabilities(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500 shadow-sm"
               />
             </div>
 
             <div>
               <label
                 htmlFor="current-liabilities"
-                className="block text-slate-400 font-semibold mb-1"
+                className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5"
               >
                 Pasivos Corrientes (COP)
               </label>
@@ -424,17 +453,25 @@ export default function CompanyDashboard() {
                 value={currentLiabilities}
                 onChange={(e) => setCurrentLiabilities(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className="w-full bg-white dark:bg-[#081020] border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500 shadow-sm"
               />
             </div>
 
-            <div className="sm:col-span-2 pt-2">
+            <div className="sm:col-span-2 pt-3">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/20"
+                className="w-full bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-semibold py-3 rounded-xl transition-all border border-emerald-400/30 shadow-md shadow-emerald-950/20 flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
               >
-                {loading ? "Guardando..." : "Guardar Estado Financiero"}
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Guardando en Base Contable...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4" /> Radicar Estado Financiero Oficial
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -442,26 +479,25 @@ export default function CompanyDashboard() {
 
         {/* Carga por Archivo CSV Funcional */}
         <div className="space-y-6">
-          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-            <h3 className="font-bold text-sm text-slate-100 flex items-center gap-2">
-              <Upload className="w-4 h-4 text-blue-400" /> Carga Masiva mediante CSV
+          <div className="bank-panel p-6 rounded-2xl space-y-4">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+              <Upload className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Carga Masiva mediante Archivo CSV
             </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Adjunta un archivo CSV con las columnas{" "}
-              <code>
-                fiscal_year,revenue,expenses,operating_income,net_income,total_assets,current_assets,total_liabilities,current_liabilities,financial_debt,financial_expenses
-              </code>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Importación directa de balances estructurados con validación automática de cabeceras contables.
             </p>
 
             <label
               htmlFor="csv-upload-input"
-              className="block border-2 border-dashed border-slate-700 hover:border-blue-500/50 rounded-xl p-6 text-center space-y-2 cursor-pointer transition-colors"
+              className="block border-2 border-dashed border-slate-300 dark:border-[#243c68] hover:border-blue-500 bg-slate-50 dark:bg-[#070e1c] hover:bg-slate-100 dark:hover:bg-[#0b1730] rounded-xl p-6 text-center space-y-2 cursor-pointer transition-all active:scale-[0.99]"
             >
-              <Upload className="w-8 h-8 text-slate-500 mx-auto" />
-              <span className="text-xs text-slate-300 block font-semibold">
-                {csvUploading ? "Importando archivo CSV..." : "Seleccionar archivo CSV (.csv)"}
+              <Upload className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto" />
+              <span className="text-xs text-slate-700 dark:text-slate-200 block font-semibold">
+                {csvUploading ? "Importando y computando ratios..." : "Seleccionar archivo CSV (.csv)"}
               </span>
-              <span className="text-[10px] text-slate-500 block">Máximo 5 MB (UTF-8)</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono">
+                Límite máximo: 5 MB &bull; Codificación UTF-8
+              </span>
               <input
                 ref={fileInputRef}
                 id="csv-upload-input"
@@ -474,14 +510,12 @@ export default function CompanyDashboard() {
             </label>
           </div>
 
-          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-3">
-            <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-              <AlertCircle className="w-4 h-4 text-amber-400" /> Control de Permiso por Objeto
+          <div className="bank-panel p-6 rounded-2xl space-y-3">
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" /> Aislamiento de Datos por NIT (AGENTS.md §6)
             </h4>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              De acuerdo con las reglas del sistema, una Empresa solo tiene autorización para
-              consultar y cargar datos pertenecientes a su propio NIT registrado y aprobado por un
-              Administrador.
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+              De acuerdo con las directrices de seguridad del sistema financiero, las empresas solo tienen acceso exclusivo a cargar y consultar información contable perteneciente a su propio NIT validado y aprobado por la entidad bancaria.
             </p>
           </div>
         </div>
