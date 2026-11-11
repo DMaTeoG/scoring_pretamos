@@ -71,6 +71,8 @@ export interface ShapFactor {
 
 export type RiskLevel = "BAJO" | "MEDIO" | "ALTO" | "MUY_ALTO";
 
+export type CreditDecisionStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface Evaluation {
   id: number;
   company: CompanyProfile;
@@ -81,9 +83,16 @@ export interface Evaluation {
   risk_level: RiskLevel;
   confidence: "ALTA" | "MEDIA" | "BAJA" | string;
   factors: ShapFactor[];
+  requested_amount?: string | number | null;
+  term_months?: number | null;
+  decision_status?: CreditDecisionStatus;
+  decided_by_email?: string | null;
+  decided_at?: string | null;
   inputs_snapshot?: {
     financial_statement_id?: number;
     fiscal_year?: number;
+    requested_amount?: string | null;
+    term_months?: number | null;
     ratios?: FinancialRatios;
   };
   disclaimer: string;

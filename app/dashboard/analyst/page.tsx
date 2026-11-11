@@ -19,7 +19,15 @@ import {
   Layers,
 } from "lucide-react";
 import { z } from "zod";
-import { fetchAPI, downloadReportPDF, formatCOP, formatDateES } from "@/lib/api";
+import {
+  fetchAPI,
+  downloadReportPDF,
+  formatCOP,
+  formatDateES,
+  mergeEvaluationsWithStore,
+  upsertStoredEvaluation,
+  getStoredEvaluations,
+} from "@/lib/api";
 import { CompanyProfile, Evaluation, FinancialStatement } from "@/lib/types";
 import { CompanySkeleton, EvaluationSkeleton, TableSkeleton } from "@/components/Skeleton";
 
@@ -58,9 +66,11 @@ export default function AnalystDashboard() {
       if (riskQuery.trim()) params.set("risk_level", riskQuery.trim());
       const queryStr = params.toString() ? `?${params.toString()}` : "";
       const data = await fetchAPI<Evaluation[]>(`/evaluations/${queryStr}`);
-      setHistory(Array.isArray(data) ? data : []);
+      const merged = mergeEvaluationsWithStore(Array.isArray(data) ? data : []);
+      setHistory(merged);
     } catch {
-      // Keep current history if backend is unreachable
+      const stored = getStoredEvaluations();
+      if (stored.length > 0) setHistory(stored);
     } finally {
       setHistoryLoading(false);
     }
@@ -73,10 +83,13 @@ export default function AnalystDashboard() {
       try {
         const data = await fetchAPI<Evaluation[]>("/evaluations/");
         if (active && Array.isArray(data)) {
-          setHistory(data);
+          setHistory(mergeEvaluationsWithStore(data));
         }
       } catch {
-        // Keep current history if backend is unreachable
+        const stored = getStoredEvaluations();
+        if (active && stored.length > 0) {
+          setHistory(stored);
+        }
       } finally {
         if (active) setHistoryLoading(false);
       }
@@ -189,8 +202,13 @@ export default function AnalystDashboard() {
         body: JSON.stringify({ nit }),
       });
       await new Promise((resolve) => setTimeout(resolve, 800));
-      setEvaluation(res);
-      setHistory((prev) => [res, ...prev.filter((item) => item.id !== res.id)]);
+      const enriched: Evaluation = {
+        ...res,
+        decision_status: res.decision_status || "PENDING",
+      };
+      upsertStoredEvaluation(enriched);
+      setEvaluation(enriched);
+      setHistory((prev) => [enriched, ...prev.filter((item) => item.id !== enriched.id)]);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("Empresa no puede solicitar") || msg.includes("dígito de verificación")) {
@@ -242,8 +260,10 @@ export default function AnalystDashboard() {
         ],
         disclaimer:
           "El score es una estimación de riesgo con fines académicos; no garantiza el pago o incumplimiento y no sustituye el criterio del analista.",
+        decision_status: "PENDING",
         created_at: "2026-03-15T10:00:00Z",
       };
+      upsertStoredEvaluation(demoEval);
       setEvaluation(demoEval);
       setHistory((prev) => [demoEval, ...prev]);
     } finally {
@@ -774,6 +794,7 @@ export default function AnalystDashboard() {
                   <th className="p-3">Score</th>
                   <th className="p-3">Nivel Riesgo</th>
                   <th className="p-3">PD</th>
+                  <th className="p-3">Estado Comité</th>
                   <th className="p-3">Fecha</th>
                   <th className="p-3 text-right">Informe</th>
                 </tr>
@@ -795,6 +816,23 @@ export default function AnalystDashboard() {
                       </span>
                     </td>
                     <td className="p-3 font-tabular">{(item.pd * 100).toFixed(2)}%</td>
+                    <td className="p-3">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                          item.decision_status === "APPROVED"
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                            : item.decision_status === "REJECTED"
+                            ? "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30"
+                            : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                        }`}
+                      >
+                        {item.decision_status === "APPROVED"
+                          ? "ACEPTADO"
+                          : item.decision_status === "REJECTED"
+                          ? "RECHAZADO"
+                          : "PENDIENTE"}
+                      </span>
+                    </td>
                     <td className="p-3 text-[#6e6e73] dark:text-[#a1a1a6]">{formatDateES(item.created_at)}</td>
                     <td className="p-3 text-right">
                       <button

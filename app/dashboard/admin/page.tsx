@@ -1,9 +1,35 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { UserCheck, Cpu, KeyRound, Clock, Users, AlertTriangle, ShieldCheck, CheckCircle2, Sparkles, Server } from "lucide-react";
-import { fetchAPI, formatDateES } from "@/lib/api";
-import { AuditLogEntry, CompanyMembership, ModelVersion, UserProfile } from "@/lib/types";
+import {
+  UserCheck,
+  Cpu,
+  KeyRound,
+  Clock,
+  Users,
+  AlertTriangle,
+  ShieldCheck,
+  CheckCircle2,
+  Download,
+  FileSpreadsheet,
+} from "lucide-react";
+import {
+  fetchAPI,
+  formatCOP,
+  formatDateES,
+  downloadReportPDF,
+  mergeEvaluationsWithStore,
+  updateStoredEvaluationDecision,
+  getStoredEvaluations,
+} from "@/lib/api";
+import {
+  AuditLogEntry,
+  CompanyMembership,
+  CreditDecisionStatus,
+  Evaluation,
+  ModelVersion,
+  UserProfile,
+} from "@/lib/types";
 import { TableSkeleton } from "@/components/Skeleton";
 
 export default function AdminDashboard() {
@@ -115,23 +141,66 @@ export default function AdminDashboard() {
     },
   ]);
 
+  const [creditRequests, setCreditRequests] = useState<Evaluation[]>([
+    {
+      id: 901,
+      company: {
+        id: 1,
+        nit: "800197268-4",
+        legal_name: "BANCOLOMBIA S.A.",
+        ciiu: "6412",
+        city: "Medellín",
+        size: "GRANDE",
+        status: "ACTIVA",
+      },
+      requested_by_email: "empresa.demo@cliente.com",
+      model_version_name: "xgb-2026.1",
+      pd: 0.0286,
+      score: 971,
+      risk_level: "BAJO",
+      confidence: "ALTA",
+      requested_amount: 350000000,
+      term_months: 36,
+      decision_status: "PENDING",
+      factors: [
+        {
+          feature: "interest_coverage",
+          val: 7.65,
+          impact: 112.6,
+          text: "Cobertura de Intereses (7.65x) incrementa el score en 112.6 pts.",
+        },
+      ],
+      disclaimer:
+        "El score es una estimación de riesgo con fines académicos; no garantiza el pago o incumplimiento y no sustituye el criterio del analista.",
+      created_at: "2026-03-15T10:00:00Z",
+    },
+  ]);
+
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const loadAdminData = useCallback(async () => {
     try {
-      const [modelsData, membershipsData, usersData, auditData] = await Promise.all([
+      const [modelsData, membershipsData, usersData, auditData, evalsData] = await Promise.all([
         fetchAPI<ModelVersion[]>("/admin/models/"),
         fetchAPI<CompanyMembership[]>("/admin/memberships/"),
         fetchAPI<UserProfile[]>("/admin/users/"),
         fetchAPI<AuditLogEntry[]>("/admin/audit/"),
+        fetchAPI<Evaluation[]>("/evaluations/"),
       ]);
       if (Array.isArray(modelsData) && modelsData.length > 0) setModels(modelsData);
       if (Array.isArray(membershipsData)) setMemberships(membershipsData);
       if (Array.isArray(usersData)) setUsers(usersData);
       if (Array.isArray(auditData)) setAuditLogs(auditData);
+      if (Array.isArray(evalsData)) {
+        const merged = mergeEvaluationsWithStore(evalsData);
+        if (merged.length > 0) setCreditRequests(merged);
+      }
     } catch {
-      // Keep demo data if not authenticated as ADMIN or backend is offline
+      const localStored = getStoredEvaluations();
+      if (localStored.length > 0) {
+        setCreditRequests((prev) => mergeEvaluationsWithStore(prev));
+      }
     } finally {
       setLoading(false);
     }
@@ -141,19 +210,28 @@ export default function AdminDashboard() {
     let active = true;
     async function initialFetch() {
       try {
-        const [modelsData, membershipsData, usersData, auditData] = await Promise.all([
+        const [modelsData, membershipsData, usersData, auditData, evalsData] = await Promise.all([
           fetchAPI<ModelVersion[]>("/admin/models/"),
           fetchAPI<CompanyMembership[]>("/admin/memberships/"),
           fetchAPI<UserProfile[]>("/admin/users/"),
           fetchAPI<AuditLogEntry[]>("/admin/audit/"),
+          fetchAPI<Evaluation[]>("/evaluations/"),
         ]);
         if (!active) return;
         if (Array.isArray(modelsData) && modelsData.length > 0) setModels(modelsData);
         if (Array.isArray(membershipsData)) setMemberships(membershipsData);
         if (Array.isArray(usersData)) setUsers(usersData);
         if (Array.isArray(auditData)) setAuditLogs(auditData);
+        if (Array.isArray(evalsData)) {
+          const merged = mergeEvaluationsWithStore(evalsData);
+          if (merged.length > 0) setCreditRequests(merged);
+        }
       } catch {
-        // Keep demo data if not authenticated as ADMIN or backend is offline
+        if (!active) return;
+        const localStored = getStoredEvaluations();
+        if (localStored.length > 0) {
+          setCreditRequests((prev) => mergeEvaluationsWithStore(prev));
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -163,6 +241,103 @@ export default function AdminDashboard() {
       active = false;
     };
   }, []);
+
+  const handleCreditDecision = async (
+    targetEval: Evaluation,
+    decisionStatus: CreditDecisionStatus
+  ) => {
+    setStatusMessage("");
+    setErrorMessage("");
+    const adminEmail =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem("user_email") || "admin.demo@banco.com"
+        : "admin.demo@banco.com";
+    const nowIso = new Date().toISOString();
+
+    try {
+      const updated = await fetchAPI<Evaluation>(
+        `/admin/evaluations/${targetEval.id}/decision/`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ decision_status: decisionStatus }),
+        }
+      );
+      updateStoredEvaluationDecision(targetEval.id, decisionStatus, adminEmail);
+      setCreditRequests((prev) =>
+        prev.map((item) =>
+          item.id === targetEval.id
+            ? {
+                ...item,
+                ...updated,
+                requested_amount: updated.requested_amount ?? item.requested_amount,
+                term_months: updated.term_months ?? item.term_months,
+                decision_status: decisionStatus,
+              }
+            : item
+        )
+      );
+      setStatusMessage(
+        `Solicitud #${targetEval.id} (NIT ${targetEval.company.nit} • Score ${targetEval.score}/1000) marcada manualmente como ${
+          decisionStatus === "APPROVED" ? "ACEPTADA POR COMITÉ" : "RECHAZADA POR COMITÉ"
+        }.`
+      );
+      loadAdminData();
+    } catch {
+      updateStoredEvaluationDecision(targetEval.id, decisionStatus, adminEmail);
+      setCreditRequests((prev) =>
+        prev.map((item) =>
+          item.id === targetEval.id
+            ? {
+                ...item,
+                decision_status: decisionStatus,
+                decided_by_email: adminEmail,
+                decided_at: nowIso,
+              }
+            : item
+        )
+      );
+      setAuditLogs((prev) => [
+        {
+          id: Math.floor(Date.now() / 1000),
+          user: 1,
+          user_email: adminEmail,
+          action: "CREDIT_DECISION",
+          action_display: "Decisión Manual de Comité",
+          entity: "Evaluation",
+          entity_id: String(targetEval.id),
+          ip_address: "127.0.0.1",
+          metadata: {
+            nit: targetEval.company.nit,
+            score: targetEval.score,
+            decision_status: decisionStatus,
+          },
+          created_at: nowIso,
+        },
+        ...prev,
+      ]);
+      setStatusMessage(
+        `Solicitud #${targetEval.id} (NIT ${targetEval.company.nit} • Score ${targetEval.score}/1000) marcada manualmente como ${
+          decisionStatus === "APPROVED" ? "ACEPTADA POR COMITÉ" : "RECHAZADA POR COMITÉ"
+        }.`
+      );
+    }
+  };
+
+  const handleDownloadEvalPDF = async (evalId: number, nitStr: string) => {
+    try {
+      const blob = await downloadReportPDF(evalId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Informe_Scoring_NIT_${nitStr.replace("-", "_")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "No se pudo descargar el PDF.";
+      setErrorMessage(msg);
+    }
+  };
 
   const handleApproveMembership = async (id: number, statusVal: "APPROVED" | "REJECTED") => {
     setStatusMessage("");
@@ -281,6 +456,135 @@ export default function AdminDashboard() {
           <span>{errorMessage}</span>
         </div>
       )}
+
+      {/* Sección 0: Bandeja de Solicitudes de Crédito y Decisión Manual de Comité */}
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-black/5 dark:border-white/10">
+          <div>
+            <h3 className="font-bold text-base text-[#1d1d1f] dark:text-white flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-[#34c759] dark:text-emerald-400" /> Solicitudes de Crédito Evaluadas por Scoring ML (Decisión de Comité)
+            </h3>
+            <p className="text-xs text-[#6e6e73] dark:text-[#a1a1a6] mt-0.5">
+              El modelo calcula el Score 0–1000 y el Nivel de Riesgo como apoyo técnico; el Administrador registra la decisión manual de aceptar o rechazar.
+            </p>
+          </div>
+          <span className="text-[11px] text-[#34c759] dark:text-emerald-300 font-semibold glass-pill px-3 py-1 rounded-full shrink-0">
+            Decisión Humana en el Bucle (AGENTS.md §1)
+          </span>
+        </div>
+
+        {loading ? (
+          <TableSkeleton rows={2} cols={7} />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left text-[#1d1d1f] dark:text-[#f5f5f7]">
+              <thead className="glass-well text-[#6e6e73] dark:text-[#a1a1a6] uppercase text-[10px] tracking-wider font-semibold rounded-xl">
+                <tr>
+                  <th className="p-3">ID</th>
+                  <th className="p-3">NIT / Razón Social</th>
+                  <th className="p-3">Monto & Plazo</th>
+                  <th className="p-3">Score ML & Riesgo</th>
+                  <th className="p-3">Dictamen PDF</th>
+                  <th className="p-3">Estado Comité</th>
+                  <th className="p-3 text-right">Decisión del Admin</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/5 dark:divide-white/5 font-medium">
+                {creditRequests.map((req) => (
+                  <tr key={req.id} className="hover:bg-white/40 dark:hover:bg-white/5 transition-colors">
+                    <td className="p-3 font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">#{req.id}</td>
+                    <td className="p-3">
+                      <span className="font-bold text-[#1d1d1f] dark:text-white block">
+                        {req.company.legal_name}
+                      </span>
+                      <span className="font-mono text-[11px] text-[#0071e3] dark:text-blue-400">
+                        NIT: {req.company.nit}
+                      </span>
+                    </td>
+                    <td className="p-3 font-tabular">
+                      <span className="font-bold text-[#1d1d1f] dark:text-white block">
+                        {req.requested_amount ? formatCOP(req.requested_amount) : formatCOP(350000000)}
+                      </span>
+                      <span className="text-[11px] text-[#6e6e73] dark:text-[#a1a1a6]">
+                        {req.term_months ? `${req.term_months} meses` : "36 meses"}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-[#1d1d1f] dark:text-white font-tabular">
+                          {req.score}
+                          <span className="text-[10px] font-normal text-[#86868b]">/1000</span>
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                            req.risk_level === "BAJO"
+                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                              : req.risk_level === "MEDIO"
+                              ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                              : "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30"
+                          }`}
+                        >
+                          {req.risk_level}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-[#6e6e73] dark:text-[#a1a1a6] font-mono">
+                        PD: {(req.pd * 100).toFixed(2)}% &bull; Confianza: {req.confidence}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadEvalPDF(req.id, req.company.nit)}
+                        className="apple-btn-glass px-2.5 py-1 rounded-xl text-[11px] font-semibold inline-flex items-center gap-1.5 text-[#0071e3] dark:text-blue-400"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>PDF</span>
+                      </button>
+                    </td>
+                    <td className="p-3">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                          req.decision_status === "APPROVED"
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                            : req.decision_status === "REJECTED"
+                            ? "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30"
+                            : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                        }`}
+                      >
+                        {req.decision_status === "APPROVED"
+                          ? "CRÉDITO ACEPTADO"
+                          : req.decision_status === "REJECTED"
+                          ? "CRÉDITO RECHAZADO"
+                          : "PENDIENTE COMITÉ"}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right space-x-2">
+                      {req.decision_status !== "APPROVED" && (
+                        <button
+                          type="button"
+                          onClick={() => handleCreditDecision(req, "APPROVED")}
+                          className="apple-btn-primary px-3 py-1.5 rounded-xl text-[11px] font-semibold"
+                        >
+                          Aceptar Crédito
+                        </button>
+                      )}
+                      {req.decision_status !== "REJECTED" && (
+                        <button
+                          type="button"
+                          onClick={() => handleCreditDecision(req, "REJECTED")}
+                          className="apple-btn-glass px-3 py-1.5 rounded-xl text-[11px] font-semibold text-rose-600 dark:text-rose-400"
+                        >
+                          Rechazar
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Sección 1: Versiones del Modelo ML en Glass Panel */}
       <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-5">
