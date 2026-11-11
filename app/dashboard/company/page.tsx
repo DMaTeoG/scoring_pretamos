@@ -30,7 +30,54 @@ import {
 import { CompanyProfile, Evaluation, FinancialStatement, RiskLevel } from "@/lib/types";
 import { Skeleton } from "@/components/Skeleton";
 
+const PRESET_COMPANIES: CompanyProfile[] = [
+  {
+    id: 1,
+    nit: "800197268-4",
+    legal_name: "BANCOLOMBIA S.A.",
+    ciiu: "6412",
+    city: "Medellín",
+    size: "GRANDE",
+    status: "ACTIVA",
+  },
+  {
+    id: 2,
+    nit: "900123456-8",
+    legal_name: "EMPRESA SIMULADA S.A.S.",
+    ciiu: "4690",
+    city: "Bogotá, D.C.",
+    size: "MEDIANA",
+    status: "ACTIVA",
+  },
+  {
+    id: 3,
+    nit: "890903938-8",
+    legal_name: "GRUPO NUTRESA S.A.",
+    ciiu: "1089",
+    city: "Medellín",
+    size: "GRANDE",
+    status: "ACTIVA",
+  },
+  {
+    id: 4,
+    nit: "860002964-4",
+    legal_name: "BANCO DE BOGOTÁ S.A.",
+    ciiu: "6412",
+    city: "Bogotá, D.C.",
+    size: "GRANDE",
+    status: "ACTIVA",
+  },
+];
+
 const financialStatementSchema = z.object({
+  nit: z
+    .string()
+    .trim()
+    .min(6, "Ingresa un NIT válido (ej: 800197268-4)."),
+  legal_name: z
+    .string()
+    .trim()
+    .min(2, "Ingresa la Razón Social de la empresa."),
   requested_amount: z
     .number()
     .positive("El monto de crédito solicitado debe ser mayor a cero."),
@@ -54,7 +101,9 @@ const financialStatementSchema = z.object({
 });
 
 export default function CompanyDashboard() {
-  const [company, setCompany] = useState<CompanyProfile | null>(null);
+  const [company, setCompany] = useState<CompanyProfile | null>(PRESET_COMPANIES[0]);
+  const [companyNit, setCompanyNit] = useState(PRESET_COMPANIES[0].nit);
+  const [companyLegalName, setCompanyLegalName] = useState(PRESET_COMPANIES[0].legal_name);
   const [latestEvaluation, setLatestEvaluation] = useState<Evaluation | null>(null);
   const [contextLoading, setContextLoading] = useState(true);
   const [requestedAmount, setRequestedAmount] = useState("350000000");
@@ -73,28 +122,37 @@ export default function CompanyDashboard() {
   const [csvUploading, setCsvUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const handleSelectPresetCompany = (selectedNit: string) => {
+    setSuccessMsg("");
+    setErrorMsg("");
+    const match = PRESET_COMPANIES.find((c) => c.nit === selectedNit);
+    if (match) {
+      setCompany(match);
+      setCompanyNit(match.nit);
+      setCompanyLegalName(match.legal_name);
+      const storedForNit = getStoredEvaluations().filter((e) => e.company.nit === match.nit);
+      setLatestEvaluation(storedForNit.length > 0 ? storedForNit[0] : null);
+    }
+  };
+
   useEffect(() => {
     let active = true;
     async function loadCompanyContext() {
       setContextLoading(true);
-      let resolvedCompany: CompanyProfile = {
-        id: 1,
-        nit: "800197268-4",
-        legal_name: "BANCOLOMBIA S.A.",
-        ciiu: "6412",
-        city: "Medellín",
-        size: "GRANDE",
-        status: "ACTIVA",
-      };
+      let resolvedCompany: CompanyProfile = PRESET_COMPANIES[0];
       try {
         const myComp = await fetchAPI<CompanyProfile>("/companies/my-company/");
         if (active) {
           setCompany(myComp);
+          setCompanyNit(myComp.nit);
+          setCompanyLegalName(myComp.legal_name);
           resolvedCompany = myComp;
         }
       } catch {
         if (active) {
           setCompany(resolvedCompany);
+          setCompanyNit(resolvedCompany.nit);
+          setCompanyLegalName(resolvedCompany.legal_name);
         }
       }
 
@@ -128,6 +186,8 @@ export default function CompanyDashboard() {
     setErrorMsg("");
 
     const parsed = financialStatementSchema.safeParse({
+      nit: companyNit,
+      legal_name: companyLegalName,
       requested_amount: parseFloat(requestedAmount),
       term_months: Number(termMonths),
       fiscal_year: Number(fiscalYear),
@@ -147,7 +207,14 @@ export default function CompanyDashboard() {
 
     setLoading(true);
     const targetCompanyId = company?.id ?? 1;
-    const targetNit = company?.nit || "800197268-4";
+    const targetNit = parsed.data.nit;
+    const targetLegalName = parsed.data.legal_name;
+    const updatedCompanyObj: CompanyProfile = {
+      ...(company || PRESET_COMPANIES[0]),
+      nit: targetNit,
+      legal_name: targetLegalName,
+    };
+    setCompany(updatedCompanyObj);
     let createdStatementId: number | undefined;
 
     try {
@@ -231,14 +298,10 @@ export default function CompanyDashboard() {
 
       const fallbackEval: Evaluation = {
         id: Math.floor(Date.now() / 1000),
-        company: company || {
-          id: targetCompanyId,
+        company: {
+          ...updatedCompanyObj,
           nit: targetNit,
-          legal_name: "BANCOLOMBIA S.A.",
-          ciiu: "6412",
-          city: "Medellín",
-          size: "GRANDE",
-          status: "ACTIVA",
+          legal_name: targetLegalName,
         },
         requested_by_email:
           typeof window !== "undefined"
@@ -375,13 +438,33 @@ export default function CompanyDashboard() {
           </div>
 
           {company && (
-            <div className="glass-pill px-4 py-2.5 rounded-2xl text-xs shrink-0">
-              <span className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] uppercase font-bold tracking-wider">
-                NIT Autorizado
-              </span>
-              <span className="font-bold text-[#34c759] dark:text-emerald-300 font-mono">
-                {company.nit} &bull; {company.legal_name}
-              </span>
+            <div className="glass-pill px-4 py-2.5 rounded-2xl text-xs shrink-0 space-y-1.5">
+              <label
+                htmlFor="preset-company-select"
+                className="text-[#6e6e73] dark:text-[#a1a1a6] block text-[10px] uppercase font-bold tracking-wider"
+              >
+                Cambiar Empresa Activa (Demo / NIT)
+              </label>
+              <select
+                id="preset-company-select"
+                value={
+                  PRESET_COMPANIES.some((c) => c.nit === companyNit)
+                    ? companyNit
+                    : PRESET_COMPANIES[0].nit
+                }
+                onChange={(e) => handleSelectPresetCompany(e.target.value)}
+                className="w-full glass-well rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#34c759] dark:text-emerald-300 font-mono focus:outline-none focus:ring-1 focus:ring-[#34c759]"
+              >
+                {PRESET_COMPANIES.map((preset) => (
+                  <option
+                    key={preset.nit}
+                    value={preset.nit}
+                    className="text-slate-900 bg-white dark:bg-slate-900 dark:text-white"
+                  >
+                    {preset.nit} • {preset.legal_name}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
         </div>
@@ -549,6 +632,46 @@ export default function CompanyDashboard() {
             className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs"
             noValidate
           >
+            <div className="p-3.5 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20">
+              <label htmlFor="company-nit" className="block text-[#34c759] dark:text-emerald-300 font-bold mb-1.5">
+                NIT de la Empresa Solicitante
+              </label>
+              <input
+                id="company-nit"
+                type="text"
+                value={companyNit}
+                onChange={(e) => {
+                  setCompanyNit(e.target.value);
+                  setCompany((prev) =>
+                    prev ? { ...prev, nit: e.target.value } : null
+                  );
+                }}
+                placeholder="Ej: 800197268-4"
+                required
+                className="w-full glass-well rounded-xl p-2.5 text-[#1d1d1f] dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#34c759]"
+              />
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20">
+              <label htmlFor="company-legal-name" className="block text-[#34c759] dark:text-emerald-300 font-bold mb-1.5">
+                Razón Social de la Empresa
+              </label>
+              <input
+                id="company-legal-name"
+                type="text"
+                value={companyLegalName}
+                onChange={(e) => {
+                  setCompanyLegalName(e.target.value);
+                  setCompany((prev) =>
+                    prev ? { ...prev, legal_name: e.target.value } : null
+                  );
+                }}
+                placeholder="Ej: BANCOLOMBIA S.A."
+                required
+                className="w-full glass-well rounded-xl p-2.5 text-[#1d1d1f] dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#34c759]"
+              />
+            </div>
+
             <div className="p-3.5 rounded-2xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20">
               <label htmlFor="requested-amount" className="block text-[#0071e3] dark:text-blue-300 font-bold mb-1.5">
                 Monto del Crédito Solicitado (COP)

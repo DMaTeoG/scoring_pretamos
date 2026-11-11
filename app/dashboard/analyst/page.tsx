@@ -40,6 +40,8 @@ const nitLookupSchema = z.object({
 
 export default function AnalystDashboard() {
   const [nit, setNit] = useState("800197268-4");
+  const [requestedAmount, setRequestedAmount] = useState("350000000");
+  const [termMonths, setTermMonths] = useState(36);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [evaluationLoading, setEvaluationLoading] = useState(false);
   const [wsProgress, setWsProgress] = useState<{
@@ -119,6 +121,13 @@ export default function AnalystDashboard() {
         `/companies/lookup/?nit=${encodeURIComponent(parsed.data.nit)}`
       );
       setCompany(data);
+      const prevForNit = getStoredEvaluations().find((e) => e.company.nit === data.nit);
+      if (prevForNit?.requested_amount) {
+        setRequestedAmount(String(prevForNit.requested_amount));
+      }
+      if (prevForNit?.term_months) {
+        setTermMonths(Number(prevForNit.term_months));
+      }
       if (data.id) {
         try {
           const finData = await fetchAPI<FinancialStatement[]>(
@@ -196,14 +205,23 @@ export default function AnalystDashboard() {
       // If WebSocket fails, continue gracefully with HTTP POST
     }
 
+    const parsedAmount = Math.max(0, parseFloat(requestedAmount) || 350000000);
+    const parsedTerm = Math.max(1, Math.min(360, Number(termMonths) || 36));
+
     try {
       const res = await fetchAPI<Evaluation>("/evaluations/", {
         method: "POST",
-        body: JSON.stringify({ nit }),
+        body: JSON.stringify({
+          nit,
+          requested_amount: parsedAmount,
+          term_months: parsedTerm,
+        }),
       });
       await new Promise((resolve) => setTimeout(resolve, 800));
       const enriched: Evaluation = {
         ...res,
+        requested_amount: res.requested_amount ?? parsedAmount,
+        term_months: res.term_months ?? parsedTerm,
         decision_status: res.decision_status || "PENDING",
       };
       upsertStoredEvaluation(enriched);
@@ -231,6 +249,8 @@ export default function AnalystDashboard() {
         risk_level: "BAJO",
         pd: 0.218,
         confidence: "ALTA",
+        requested_amount: parsedAmount,
+        term_months: parsedTerm,
         model_version_name: "xgb-2026.1",
         factors: [
           {
@@ -409,7 +429,7 @@ export default function AnalystDashboard() {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-blue-950/90 via-slate-900/80 to-transparent" />
 
-            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl backdrop-blur-xl bg-white/20 border border-white/30 flex items-center justify-center text-white shrink-0 shadow-lg">
                   <Building2 className="w-7 h-7" />
@@ -428,24 +448,66 @@ export default function AnalystDashboard() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleEvaluate}
-                disabled={evaluationLoading}
-                className="apple-btn-primary font-bold text-xs px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl shrink-0 disabled:opacity-50"
-              >
-                {evaluationLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Computando Modelo ML...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 text-amber-300" />
-                    <span>Ejecutar Evaluación Crediticia</span>
-                  </>
-                )}
-              </button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full lg:w-auto backdrop-blur-md bg-slate-900/60 border border-white/20 p-3.5 rounded-2xl">
+                <div>
+                  <label
+                    htmlFor="analyst-requested-amount"
+                    className="block text-[10px] font-bold uppercase tracking-wider text-blue-200 mb-1"
+                  >
+                    Monto Solicitado (COP)
+                  </label>
+                  <input
+                    id="analyst-requested-amount"
+                    type="number"
+                    value={requestedAmount}
+                    onChange={(e) => setRequestedAmount(e.target.value)}
+                    className="w-full sm:w-44 rounded-xl bg-white/15 border border-white/25 px-3 py-2 text-xs text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+                  />
+                  <span className="block text-[10px] text-emerald-300 font-mono mt-0.5">
+                    {formatCOP(requestedAmount)}
+                  </span>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="analyst-term-months"
+                    className="block text-[10px] font-bold uppercase tracking-wider text-blue-200 mb-1"
+                  >
+                    Plazo (Meses)
+                  </label>
+                  <input
+                    id="analyst-term-months"
+                    type="number"
+                    min={1}
+                    max={360}
+                    value={termMonths}
+                    onChange={(e) => setTermMonths(Number(e.target.value))}
+                    className="w-full sm:w-24 rounded-xl bg-white/15 border border-white/25 px-3 py-2 text-xs text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+                  />
+                  <span className="block text-[10px] text-blue-200 font-mono mt-0.5">
+                    {termMonths} meses
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleEvaluate}
+                  disabled={evaluationLoading}
+                  className="apple-btn-primary font-bold text-xs px-5 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-xl shrink-0 disabled:opacity-50"
+                >
+                  {evaluationLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Computando Modelo ML...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>Ejecutar Evaluación Crediticia</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -660,7 +722,19 @@ export default function AnalystDashboard() {
               </div>
             </div>
 
-            <div className="md:col-span-3 grid grid-cols-3 gap-3 text-center">
+            <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className="glass-card p-4 rounded-2xl space-y-1">
+                <span className="text-xs text-[#6e6e73] dark:text-[#a1a1a6] block font-medium">
+                  Monto & Plazo
+                </span>
+                <span className="text-base font-black text-[#0071e3] dark:text-blue-400 font-tabular block">
+                  {formatCOP(evaluation.requested_amount ?? requestedAmount)}
+                </span>
+                <span className="text-[10px] text-[#86868b] block">
+                  Plazo: {evaluation.term_months ?? termMonths} meses
+                </span>
+              </div>
+
               <div className="glass-card p-4 rounded-2xl space-y-1">
                 <span className="text-xs text-[#6e6e73] dark:text-[#a1a1a6] block font-medium">
                   Probabilidad Incumplimiento (PD)
@@ -791,6 +865,7 @@ export default function AnalystDashboard() {
                   <th className="p-3">ID</th>
                   <th className="p-3">NIT</th>
                   <th className="p-3">Empresa</th>
+                  <th className="p-3">Monto Solicitado</th>
                   <th className="p-3">Score</th>
                   <th className="p-3">Nivel Riesgo</th>
                   <th className="p-3">PD</th>
@@ -805,6 +880,9 @@ export default function AnalystDashboard() {
                     <td className="p-3 font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">#{item.id}</td>
                     <td className="p-3 font-mono text-[#0071e3] dark:text-blue-400">{item.company.nit}</td>
                     <td className="p-3 text-[#1d1d1f] dark:text-white font-medium">{item.company.legal_name}</td>
+                    <td className="p-3 font-tabular font-semibold text-[#1d1d1f] dark:text-white">
+                      {item.requested_amount ? formatCOP(item.requested_amount) : formatCOP(350000000)}
+                    </td>
                     <td className="p-3 font-bold text-[#ff9500] dark:text-amber-400 font-tabular">{item.score}</td>
                     <td className="p-3">
                       <span
